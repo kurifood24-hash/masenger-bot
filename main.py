@@ -119,7 +119,7 @@ def get_ai_reply(sender_id: str, user_message: str) -> str:
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.0-flash-lite",
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             max_output_tokens=800,
