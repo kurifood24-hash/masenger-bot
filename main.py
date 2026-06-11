@@ -5,7 +5,7 @@ import hashlib
 import requests
 from fastapi import FastAPI, Request, Response
 from dotenv import load_dotenv
-import anthropic
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -15,17 +15,13 @@ app = FastAPI()
 PAGE_ACCESS_TOKEN   = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN        = os.getenv("VERIFY_TOKEN")
 APP_SECRET          = os.getenv("APP_SECRET")
-ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY")
+GEMINI_API_KEY      = os.getenv("GEMINI_API_KEY")
 
-# ─── Anthropic Client ────────────────────────────────────────────────────────
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-# ─── In-memory stores ────────────────────────────────────────────────────────
-conversation_history: dict[str, list] = {}
-human_handover_users: set[str] = set()  # যে users এর জন্য AI pause করা আছে
-
-# ─── System Prompt ───────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """
+# ─── Gemini Client ────────────────────────────────────────────────────────────
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel(
+    model_name="gemini-2.0-flash",
+    system_instruction="""
 তুমি "সেলিম ভাই" — একজন অভিজ্ঞ ও বিশ্বস্ত বাংলাদেশি ই-কমার্স সেলসম্যান।
 তুমি বাংলায় কথা বলো। কাস্টমার ইংরেজিতে লিখলে বাংলায় উত্তর দাও।
 
@@ -70,10 +66,14 @@ SYSTEM_PROMPT = """
 
 অন্য সব ক্ষেত্রে স্বাভাবিকভাবে সেলসম্যান হিসেবে উত্তর দাও।
 """
+)
+
+# ─── In-memory stores ────────────────────────────────────────────────────────
+conversation_history: dict[str, list] = {}
+human_handover_users: set[str] = set()
 
 # ─── Handover Detection ──────────────────────────────────────────────────────
 def needs_handover(ai_response: str) -> bool:
-    """AI যদি handover JSON রিটার্ন করে তাহলে True"""
     try:
         data = json.loads(ai_response.strip())
         return data.get("handover") is True
@@ -82,11 +82,10 @@ def needs_handover(ai_response: str) -> bool:
 
 # ─── Human Handover API Call ─────────────────────────────────────────────────
 def request_human_handover(sender_id: str):
-    """Meta Handover Protocol — AI থেকে Inbox-এ transfer করে"""
     url = f"https://graph.facebook.com/v18.0/me/pass_thread_control"
     payload = {
         "recipient": {"id": sender_id},
-        "target_app_id": 263902037430900,  # Meta Business Inbox App ID
+        "target_app_id": 263902037430900,
         "metadata": "Customer needs live agent support"
     }
     params = {"access_token": PAGE_ACCESS_TOKEN}
@@ -119,22 +118,28 @@ def send_message(recipient_id: str, text: str):
         }
         requests.post(url, headers=headers, params=params, json=payload)
 
-# ─── Get AI Reply ─────────────────────────────────────────────────────────────
+# ─── Get AI Reply (Gemini) ────────────────────────────────────────────────────
 def get_ai_reply(sender_id: str, user_message: str) -> str:
     history = conversation_history.setdefault(sender_id, [])
+
+    # Gemini format: role must be "user" or "model"
+    gemini_history = []
+    for msg in history[-20:]:
+        role = "model" if msg["role"] == "assistant" else "user"
+        gemini_history.append({"role": role, "parts": [msg["content"]]})
+
+    # নতুন message যোগ করো
+    gemini_history.append({"role": "user", "parts": [user_message]})
+
+    chat = model.start_chat(history=gemini_history[:-1])
+    response = chat.send_message(user_message)
+    reply = response.text
+
+    # History আপডেট করো
     history.append({"role": "user", "content": user_message})
-    trimmed = history[-20:]
-
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=800,
-        system=SYSTEM_PROMPT,
-        messages=trimmed,
-    )
-
-    reply = response.content[0].text
     history.append({"role": "assistant", "content": reply})
     conversation_history[sender_id] = history[-20:]
+
     return reply
 
 # ─── Webhook Verification (GET) ──────────────────────────────────────────────
@@ -179,47 +184,32 @@ async def handle_webhook(request: Request):
 
             print(f"📩 Message from {sender_id}: {text}")
 
-            # ── যদি এই user ইতোমধ্যে Live Agent-এ আছে ──
             if sender_id in human_handover_users:
                 print(f"⏸️ AI paused for {sender_id} — Live Agent handling")
                 continue
 
-            # ── AI Reply নাও ──
             reply = get_ai_reply(sender_id, text)
 
-            # ── Handover দরকার কিনা চেক করো ──
             if needs_handover(reply):
                 print(f"🔄 Handover triggered for {sender_id}")
-
-                # কাস্টমারকে জানাও
                 send_message(
                     sender_id,
                     "আপনার মেসেজটি একজন \"Live Agent\" এর কাছে ট্রান্সফার করা হচ্ছে। "
                     "অনুগ্রহ করে একটু অপেক্ষা করুন। 🙏"
                 )
-
-                # Meta Handover Protocol call
                 request_human_handover(sender_id)
-
-                # এই user-কে pause list-এ রাখো
                 human_handover_users.add(sender_id)
-
             else:
                 send_message(sender_id, reply)
                 print(f"💬 Reply sent: {reply[:80]}...")
 
     return {"status": "ok"}
 
-# ─── Agent টাকে আবার Active করার endpoint (Live Agent শেষ হলে) ──────────────
+# ─── Resume AI endpoint ───────────────────────────────────────────────────────
 @app.post("/resume/{sender_id}")
 async def resume_ai(sender_id: str):
-    """
-    Live Agent কথা শেষ করলে এই endpoint call করলে
-    AI আবার সেই customer-এর জন্য active হবে।
-    """
     if sender_id in human_handover_users:
         human_handover_users.discard(sender_id)
-        # conversation history reset করো নতুন করে শুরুর জন্য
         conversation_history.pop(sender_id, None)
         return {"status": "resumed", "sender_id": sender_id}
     return {"status": "not_in_handover", "sender_id": sender_id}
