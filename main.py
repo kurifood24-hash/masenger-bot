@@ -20,7 +20,7 @@ GEMINI_API_KEY      = os.getenv("GEMINI_API_KEY")
 # ─── Gemini Client ────────────────────────────────────────────────────────────
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash",
+    model_name="gemini-1.5-flash",
     system_instruction="""
 তুমি "সেলিম ভাই" — একজন অভিজ্ঞ ও বিশ্বস্ত বাংলাদেশি ই-কমার্স সেলসম্যান।
 তুমি বাংলায় কথা বলো। কাস্টমার ইংরেজিতে লিখলে বাংলায় উত্তর দাও।
