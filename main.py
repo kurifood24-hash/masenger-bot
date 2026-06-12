@@ -17,6 +17,8 @@ PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN      = os.getenv("VERIFY_TOKEN")
 APP_SECRET        = os.getenv("APP_SECRET")
 GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
+KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
+KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -58,13 +60,22 @@ SYSTEM_PROMPT = """
 ১১. মিক্সড শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
     (কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — ১০০% খাঁটি সরিষার তেলে)
 ১২. বালাচাও — ১০০ গ্রাম/১৫০ টাকা | ২০০ গ্রাম/২৫০ টাকা | ৪০০ গ্রাম/৪৫০ টাকা
-১৩. হাড়িভাঙ্গা আম — ৫ কেজি/৫৫০ টাকা | ১০ কেজি/১০০০ টাকা | ১০ কেজির বেশি: প্রতি কেজি ৯০ টাকা
-১৪. গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
+১৩. গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
+
+### হাড়িভাঙ্গা আম (প্রি-অর্ডার চলছে):
+- ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি বাগান থেকে
+- আঁশহীন, ছোট আঁটি, রসে ভরপুর — গড়ে ৩টি আমে ১ কেজি
+- ১০ কেজি — ১,২০০ টাকা (ডেলিভারি সম্পূর্ণ ফ্রি)
+- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি সম্পূর্ণ ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
+- সম্ভাব্য ডেলিভারি: ২১-২৩ জুন (আবহাওয়া বা হার্ভেস্ট জনিত কারণে পরিবর্তন হতে পারে)
+- পেমেন্ট: ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট, রংপুর — ক্যাশ অন ডেলিভারি
+- অন্য জেলায় — কমপক্ষে ৫০% অগ্রিম পেমেন্ট করে অর্ডার কনফার্ম
+- আমে ৩-৫% ক্ষেত্রে সমস্যা হলে ছবি/ভিডিও পাঠালে রিফান্ড/রিপ্লেসের ব্যবস্থা করা হবে
 
 ### শীঘ্রই আসছে:
-- সরিষার তেল (উৎপাদন প্রসেসিং চলছে, বাজারজাত হলে জানানো হবে)
+- সরিষার তেল (উৎপাদন প্রসেসিং চলছে)
 
-## ডেলিভারি তথ্য:
+## ডেলিভারি তথ্য (আচার ও অন্যান্য পণ্য):
 - সারা বাংলাদেশে ক্যাশ অন ডেলিভারি — কোনো অগ্রিম টাকা নেই
 - ডেলিভারি চার্জ: ৭০ টাকা
 - ঢাকা সিটির ভেতরে: ১-২ দিন | বাইরে: ২-৩ দিন
@@ -89,42 +100,39 @@ SYSTEM_PROMPT = """
 উত্তর: স্যার, আমাদের পণ্য শুধুমাত্র অনলাইনে পাওয়া যায়। অফলাইনে আপাতত কোনো প্রতিষ্ঠান নেই।
 
 প্রশ্ন: কেমিক্যাল বা প্রিজারভেটিভ আছে?
-উত্তর: স্যার, আমাদের সব পণ্যে কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই। আচারের ক্ষেত্রে মূল রহস্য হলো ঘানিভাঙ্গা খাঁটি সরিষার তেল যা প্রাকৃতিক সংরক্ষক হিসেবে কাজ করে। অন্যান্য পণ্যের ক্ষেত্রে সঠিক উপকরণ ও সঠিক প্যাকেজিং।
+উত্তর: স্যার, আমাদের সব পণ্যে কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই। আচারের ক্ষেত্রে মূল রহস্য হলো ঘানিভাঙ্গা খাঁটি সরিষার তেল যা প্রাকৃতিক সংরক্ষক হিসেবে কাজ করে।
 
 প্রশ্ন: ডেলিভারিতে ভাঙলে কী হবে?
-উত্তর: স্যার, যেকোনো সমস্যায় — কাচের জার ভাঙলে বা পণ্য নষ্ট হলে — সম্পূর্ণ দায় আমাদের। হেল্পলাইনে যোগাযোগ করুন: 01712775905
+উত্তর: স্যার, যেকোনো সমস্যায় সম্পূর্ণ দায় আমাদের। হেল্পলাইনে যোগাযোগ করুন: 01712775905
 
 প্রশ্ন: সরিষার তেল পাওয়া যায়?
-উত্তর: দুঃখিত স্যার, আমাদের ব্র্যান্ডের সরিষার তেল উৎপাদন প্রসেসিং আছে। খুব শীঘ্রই বাজারজাতকরণ শুরু হলে আপনাকে জানিয়ে দেওয়া হবে। ধন্যবাদ।
-
-প্রশ্ন: বালাচাও আছে?
-উত্তর: জি স্যার, আছে। ১০০ গ্রাম ১৫০ টাকা, ২০০ গ্রাম ২৫০ টাকা এবং ৪০০ গ্রাম ৪৫০ টাকা।
-
-প্রশ্ন: মিক্সড শুটকিতে কী কী শুটকি আছে?
-উত্তর: স্যার, আমাদের মিক্সড শুটকি ভর্তায় আছে — কাঁচকি শুটকি, মলা ও ছোট টেংরা শুটকি এবং পাঁচমিশালি নদীর ছোট শুটকি। সম্পূর্ণ ১০০% খাঁটি সরিষার তেলে তৈরি, কোনো কেমিক্যাল নেই।
+উত্তর: দুঃখিত স্যার, আমাদের ব্র্যান্ডের সরিষার তেল উৎপাদন প্রসেসিং আছে। খুব শীঘ্রই বাজারজাতকরণ শুরু হলে জানানো হবে।
 
 প্রশ্ন: ছবি দেখতে চাই
 উত্তর: স্যার, আমাদের মাংসের আচার কম্বো প্যাকেজের অরিজিনাল ছবি দেখতে এই লিংকে যান: https://www.facebook.com/share/p/1CMFJr1NdY/
 
 প্রশ্ন: আচার কতদিন ভালো থাকে?
-উত্তর: স্যার, সাধারণ তাপমাত্রায় ৩-৪ মাস। ফ্রিজের নরমালে রাখলে ৮-৯ মাস পর্যন্ত ভালো থাকে। সবসময় পরিষ্কার ও শুকনো চামচ ব্যবহার করুন এবং ঢাকনা ভালোভাবে বন্ধ রাখুন।
+উত্তর: স্যার, সাধারণ তাপমাত্রায় ৩-৪ মাস। ফ্রিজের নরমালে রাখলে ৮-৯ মাস। সবসময় পরিষ্কার ও শুকনো চামচ ব্যবহার করুন।
 
 প্রশ্ন: দামাদামি বা কমানো যাবে?
-উত্তর: স্যার, ১২৫০ টাকার পণ্য আমরা ইতিমধ্যে মাত্র ৯৯০ টাকায় দিচ্ছি — এটাই আমাদের সর্বোচ্চ ছাড়। কোনো কেমিক্যাল বা প্রিজারভেটিভ ছাড়া ঘরোয়া পরিবেশে তৈরি পণ্য এই দামে সত্যিই অনেক সাশ্রয়ী।
+উত্তর: স্যার, ১২৫০ টাকার পণ্য আমরা ইতিমধ্যে মাত্র ৯৯০ টাকায় দিচ্ছি — এটাই আমাদের সর্বোচ্চ ছাড়।
 
-প্রশ্ন: একসাথে কি একাধিক পণ্য নেওয়া যাবে?
-উত্তর: জি স্যার, অবশ্যই। একসাথে একাধিক পণ্য নিলে ডেলিভারি চার্জ সাশ্রয় হবে।
+প্রশ্ন: হাড়িভাঙ্গা আম কবে পাব?
+উত্তর: স্যার, সম্ভাব্য ডেলিভারি ২১-২৩ জুন। তবে আবহাওয়া বা হার্ভেস্ট জনিত কারণে তারিখ পরিবর্তন হতে পারে।
+
+প্রশ্ন: আমে কি অগ্রিম টাকা দিতে হবে?
+উত্তর: স্যার, ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট ও রংপুর জেলায় ক্যাশ অন ডেলিভারি। অন্য জেলায় কমপক্ষে ৫০% অগ্রিম পেমেন্ট করতে হবে।
 
 ## অর্ডার নেওয়ার নিয়ম:
 কাস্টমার অর্ডার করতে চাইলে নাম, ঠিকানা ও মোবাইল নম্বর নাও।
 
 ⚠️ গুরুত্বপূর্ণ: কাস্টমার যদি একটি মেসেজে নাম + ঠিকানা + মোবাইল একসাথে দেয়, তাহলে আর কিছু জিজ্ঞেস করবে না। সরাসরি confirm করো।
 
-অর্ডার confirm হলে বলো:
-"আপনার অর্ডারটি রিসিভ করা হয়েছে। আমাদের একজন প্রতিনিধি আপনাকে ফোন দিয়ে নিশ্চিত করে পণ্যটি পাঠিয়ে দেবে। ধন্যবাদ! 😊"
+অর্ডার সম্পূর্ণ হলে নিচের JSON রিটার্ন করো:
+{"order_complete": true, "name": "নাম", "phone": "মোবাইল", "address": "ঠিকানা", "product": "পণ্যের নাম", "price": 0}
 
 ## HANDOVER নিয়ম:
-নিচের যেকোনো পরিস্থিতিতে শুধু এই JSON রিটার্ন করো, অন্য কিছু না:
+নিচের যেকোনো পরিস্থিতিতে শুধু এই JSON রিটার্ন করো:
 {"handover": true}
 
 - কাস্টমার রিফান্ড চাইছে
@@ -139,9 +147,32 @@ SYSTEM_PROMPT = """
 conversation_history: dict[str, list] = {}
 human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
-echo_followup_sent: set[str] = set()  # echo reply এর পর follow-up পাঠানো হয়েছে কিনা
+echo_followup_sent: set[str] = set()
 
-HANDOVER_TIMEOUT = 1200  # ২০ মিনিট
+HANDOVER_TIMEOUT = 300  # ৫ মিনিট
+
+def send_order_to_website(name, phone, address, product, price=0):
+    try:
+        payload = {
+            "api_key": KURIFOOD_API_KEY,
+            "name": name,
+            "phone": phone,
+            "address": address,
+            "product": product,
+            "quantity": 1,
+            "price": price,
+            "note": "Facebook Messenger অর্ডার",
+        }
+        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=10)
+        data = r.json()
+        if data.get("ok"):
+            return data.get("order_id")
+        else:
+            print(f"Order API error: {data.get('error')}")
+            return None
+    except Exception as e:
+        print(f"Order API error: {e}")
+        return None
 
 def needs_handover(ai_response: str) -> bool:
     try:
@@ -149,6 +180,15 @@ def needs_handover(ai_response: str) -> bool:
         return data.get("handover") is True
     except Exception:
         return False
+
+def is_order_complete(ai_response: str):
+    try:
+        data = json.loads(ai_response.strip())
+        if data.get("order_complete") is True:
+            return data
+        return None
+    except Exception:
+        return None
 
 def request_human_handover(sender_id: str):
     url = "https://graph.facebook.com/v18.0/me/pass_thread_control"
@@ -182,12 +222,10 @@ def send_message(recipient_id: str, text: str):
 
 def get_ai_reply(sender_id: str, user_message: str) -> str:
     history = conversation_history.setdefault(sender_id, [])
-
     contents = []
     for msg in history[-20:]:
         role = "model" if msg["role"] == "assistant" else "user"
         contents.append(types.Content(role=role, parts=[types.Part(text=msg["content"])]))
-
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
 
     response = client.models.generate_content(
@@ -235,18 +273,13 @@ async def handle_webhook(request: Request):
 
             msg = event.get("message", {})
 
-            # ── Facebook automated/echo reply detect ──
+            # ── Echo/automated reply detect ──
             if msg.get("is_echo"):
-                # Page নিজে message পাঠালে recipient এর কাছে follow-up দেবে
                 customer_id = recipient_id
                 if customer_id and customer_id not in echo_followup_sent:
                     echo_followup_sent.add(customer_id)
-                    # ছোট delay দিয়ে follow-up পাঠাও
                     time.sleep(2)
-                    send_message(
-                        customer_id,
-                        "আর কোনো তথ্য দিয়ে সহযোগিতা করতে পারি স্যার?"
-                    )
+                    send_message(customer_id, "আর কোনো তথ্য দিয়ে সহযোগিতা করতে পারি স্যার?")
                     print(f"Echo follow-up sent to {customer_id}")
                 continue
 
@@ -266,15 +299,12 @@ async def handle_webhook(request: Request):
             if not text:
                 continue
 
-            # কাস্টমার message করলে echo follow-up reset করো
             echo_followup_sent.discard(sender_id)
-
             print(f"Message from {sender_id}: {text}")
 
+            # ── Handover check ──
             if sender_id in human_handover_users:
-                handover_time = human_handover_users[sender_id]
-                elapsed = time.time() - handover_time
-
+                elapsed = time.time() - human_handover_users[sender_id]
                 if elapsed >= HANDOVER_TIMEOUT:
                     del human_handover_users[sender_id]
                     print(f"Handover timeout — AI resuming for {sender_id}")
@@ -293,7 +323,32 @@ async def handle_webhook(request: Request):
                 print(f"AI error: {e}")
                 continue
 
-            if needs_handover(reply):
+            # ── Order complete ──
+            order_data = is_order_complete(reply)
+            if order_data:
+                name    = order_data.get("name", "")
+                phone   = order_data.get("phone", "")
+                address = order_data.get("address", "")
+                product = order_data.get("product", "")
+                price   = order_data.get("price", 0)
+
+                order_id = send_order_to_website(name, phone, address, product, price)
+
+                if order_id:
+                    send_message(
+                        sender_id,
+                        f"আপনার অর্ডারটি রিসিভ করা হয়েছে!\n"
+                        f"অর্ডার নম্বর: {order_id}\n\n"
+                        f"আমাদের একজন প্রতিনিধি আপনাকে ফোন দিয়ে নিশ্চিত করে পণ্যটি পাঠিয়ে দেবে। ধন্যবাদ! 😊"
+                    )
+                else:
+                    send_message(
+                        sender_id,
+                        "আপনার অর্ডারটি রিসিভ করা হয়েছে। "
+                        "আমাদের একজন প্রতিনিধি আপনাকে ফোন দিয়ে নিশ্চিত করে পণ্যটি পাঠিয়ে দেবে। ধন্যবাদ! 😊"
+                    )
+
+            elif needs_handover(reply):
                 print(f"Handover triggered for {sender_id}")
                 send_message(
                     sender_id,
