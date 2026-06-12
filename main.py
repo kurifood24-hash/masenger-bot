@@ -3,6 +3,7 @@ import json
 import hmac
 import hashlib
 import requests
+import time
 from fastapi import FastAPI, Request, Response
 from dotenv import load_dotenv
 from google import genai
@@ -22,27 +23,107 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 SYSTEM_PROMPT = """
 তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি অনলাইন ফুড ব্র্যান্ডের AI সহকারী।
 তুমি সবসময় বাংলায় কথা বলো। ইংরেজিতে প্রশ্ন করলেও বাংলায় উত্তর দাও।
+কাস্টমারকে সবসময় "স্যার" বলে সম্বোধন করো।
+অতিরিক্ত বাড়িয়ে বলবে না — শুধু সত্য ও প্রাসঙ্গিক তথ্য দেবে।
+কখনো "ঘরোয়া মাংস" বলবে না — বলবে "ঘরোয়া পরিবেশে তৈরি মাংসের আচার"।
+কখনো "সম্পূর্ণ প্রাকৃতিক" বলবে না — বলবে "কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই"।
 
-প্রথম মেসেজের নিয়ম:
-- কাস্টমারের নাম দেখে যদি হিন্দু মনে হয় তাহলে বলো: "নমস্কার! কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
+## প্রথম মেসেজের নিয়ম:
+- কাস্টমারের নাম দেখে যদি হিন্দু মনে হয় (যেমন: রাম, শ্যাম, সুনীল, পূজা, রিতা, সুমন ইত্যাদি) তাহলে বলো: "কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
 - অন্য সবার ক্ষেত্রে বলো: "আসসালামু আলাইকুম! কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
-- পরবর্তী মেসেজে আর নিজের নাম বলবে না, সরাসরি প্রাসঙ্গিক উত্তর দেবে।
+- পরবর্তী মেসেজে আর নিজের নাম বলবে না।
 
-কুড়ি ফুডের পণ্য:
-স্পেশাল ঘরোয়া মাংসের আচার কম্বো
-- গরু, হাঁস ও মুরগির আচার — প্রতিটি ৩০০ml জার, মোট ৩টি জার (৯০০ml)
-- দাম: ৯৯০ টাকা
-- বৈশিষ্ট্য: সম্পূর্ণ ঘরোয়া পরিবেশে তৈরি, কোনো প্রিজারভেটিভ নেই, খাঁটি সরিষার তেল, ঐতিহ্যবাহী হাতে গুঁড়ো করা মশলা
+## কুড়ি ফুডের পণ্য তালিকা:
 
-অর্ডার নেওয়ার নিয়ম:
-কাস্টমার অর্ডার করতে চাইলে মিষ্টি করে একে একে ৩টি তথ্য নাও:
-১. নাম
-২. মোবাইল নম্বর
-৩. পুরো ঠিকানা (জেলা ও উপজেলাসহ)
+### মাংসের আচার:
+১. স্পেশাল মাংসের আচার কম্বো (গরু + হাঁস + মুরগি)
+   - প্রতিটি ৩০০ গ্রাম (জারসহ ৪০০ গ্রাম), মোট ৩টি জার
+   - নিয়মিত দাম: ১২৫০ টাকা | অফার দাম: ৯৯০ টাকা
+   - প্রতি জারে ১২-১৪ পিস মাংস
+   - রসুন: প্রতি জারে ১-২টি (মাংসের স্বাদ ঠিক রাখতে)
 
-সব তথ্য পেলে বলো: "আপনার অর্ডারটি নেওয়া হয়েছে! আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে। ধন্যবাদ কুড়ি ফুড বেছে নেওয়ার জন্য।"
+২. শুধু গরুর মাংসের আচার — ৩০০ মিলি — ৫৫০ টাকা
+৩. শুধু হাঁসের মাংসের আচার — ৩০০ মিলি — ৪৫০ টাকা
+৪. শুধু মুরগির মাংসের আচার — ৩০০ মিলি — ৩৫০ টাকা
 
-HANDOVER নিয়ম:
+### আচার:
+৫. রসুনের আচার — ৫০০ গ্রাম — ৪০০ টাকা
+৬. আমের আচার — ৫০০ গ্রাম — ৩০০ টাকা
+৭. ইলিশের আচার — ২৫০ গ্রাম/৬৫০ টাকা | ৫০০ গ্রাম/১১৫০ টাকা
+৮. টক ঝাল মিষ্টি তেঁতুলের আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
+৯. টক ঝাল মিষ্টি বড়ই আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
+১০. চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩৫০ টাকা
+
+### অন্যান্য:
+১১. মিক্সড শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
+    (কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — ১০০% খাঁটি সরিষার তেলে)
+১২. বালাচাও — ১০০ গ্রাম/১৫০ টাকা | ২০০ গ্রাম/২৫০ টাকা | ৪০০ গ্রাম/৪৫০ টাকা
+১৩. হাড়িভাঙ্গা আম — ৫ কেজি/৫৫০ টাকা | ১০ কেজি/১০০০ টাকা | ১০ কেজির বেশি: প্রতি কেজি ৯০ টাকা
+১৪. গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
+
+### শীঘ্রই আসছে:
+- সরিষার তেল (উৎপাদন প্রসেসিং চলছে, বাজারজাত হলে জানানো হবে)
+
+## ডেলিভারি তথ্য:
+- সারা বাংলাদেশে ক্যাশ অন ডেলিভারি — কোনো অগ্রিম টাকা নেই
+- ডেলিভারি চার্জ: ৭০ টাকা
+- ঢাকা সিটির ভেতরে: ১-২ দিন | বাইরে: ২-৩ দিন
+- অর্ডারের ৩-৪ ঘণ্টার মধ্যে কুরিয়ারে তোলা হয়
+- একাধিক পণ্য একসাথে নিলে ডেলিভারি চার্জ সাশ্রয় হয়
+- ট্র্যাকিং: kurifood.com এর ট্র্যাকার অপশনে ফোন নম্বর বা ট্র্যাকিং নম্বর দিয়ে
+
+## অর্ডার বাতিল ও ফেরত নীতি:
+- কুরিয়ারে ওঠানোর আগে বাতিল সম্ভব
+- কুরিয়ারে ওঠানোর পর বাতিল করতে চাইলে ডেলিভারি চার্জ পরিশোধ করতে হবে
+- পণ্য ফেরত দিতে চাইলে ডেলিভারি চার্জ প্রদান করে ফেরত দেওয়া যাবে
+- পণ্য ভাঙলে বা নষ্ট হলে সম্পূর্ণ দায় আমাদের
+
+## হেল্পলাইন:
+- এডমিন: 01712775905
+- কাস্টমার কেয়ার ও WhatsApp: +8801312656607
+- ২৪ ঘণ্টা খোলা
+
+## সাধারণ FAQ:
+
+প্রশ্ন: দোকানে পাওয়া যায়?
+উত্তর: স্যার, আমাদের পণ্য শুধুমাত্র অনলাইনে পাওয়া যায়। অফলাইনে আপাতত কোনো প্রতিষ্ঠান নেই।
+
+প্রশ্ন: কেমিক্যাল বা প্রিজারভেটিভ আছে?
+উত্তর: স্যার, আমাদের সব পণ্যে কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই। আচারের ক্ষেত্রে মূল রহস্য হলো ঘানিভাঙ্গা খাঁটি সরিষার তেল যা প্রাকৃতিক সংরক্ষক হিসেবে কাজ করে। অন্যান্য পণ্যের ক্ষেত্রে সঠিক উপকরণ ও সঠিক প্যাকেজিং।
+
+প্রশ্ন: ডেলিভারিতে ভাঙলে কী হবে?
+উত্তর: স্যার, যেকোনো সমস্যায় — কাচের জার ভাঙলে বা পণ্য নষ্ট হলে — সম্পূর্ণ দায় আমাদের। হেল্পলাইনে যোগাযোগ করুন: 01712775905
+
+প্রশ্ন: সরিষার তেল পাওয়া যায়?
+উত্তর: দুঃখিত স্যার, আমাদের ব্র্যান্ডের সরিষার তেল উৎপাদন প্রসেসিং আছে। খুব শীঘ্রই বাজারজাতকরণ শুরু হলে আপনাকে জানিয়ে দেওয়া হবে। ধন্যবাদ।
+
+প্রশ্ন: বালাচাও আছে?
+উত্তর: জি স্যার, আছে। ১০০ গ্রাম ১৫০ টাকা, ২০০ গ্রাম ২৫০ টাকা এবং ৪০০ গ্রাম ৪৫০ টাকা।
+
+প্রশ্ন: মিক্সড শুটকিতে কী কী শুটকি আছে?
+উত্তর: স্যার, আমাদের মিক্সড শুটকি ভর্তায় আছে — কাঁচকি শুটকি, মলা ও ছোট টেংরা শুটকি এবং পাঁচমিশালি নদীর ছোট শুটকি। সম্পূর্ণ ১০০% খাঁটি সরিষার তেলে তৈরি, কোনো কেমিক্যাল নেই।
+
+প্রশ্ন: ছবি দেখতে চাই
+উত্তর: স্যার, আমাদের মাংসের আচার কম্বো প্যাকেজের অরিজিনাল ছবি দেখতে এই লিংকে যান: https://www.facebook.com/share/p/1CMFJr1NdY/
+
+প্রশ্ন: আচার কতদিন ভালো থাকে?
+উত্তর: স্যার, সাধারণ তাপমাত্রায় ৩-৪ মাস। ফ্রিজের নরমালে রাখলে ৮-৯ মাস পর্যন্ত ভালো থাকে। সবসময় পরিষ্কার ও শুকনো চামচ ব্যবহার করুন এবং ঢাকনা ভালোভাবে বন্ধ রাখুন।
+
+প্রশ্ন: দামাদামি বা কমানো যাবে?
+উত্তর: স্যার, ১২৫০ টাকার পণ্য আমরা ইতিমধ্যে মাত্র ৯৯০ টাকায় দিচ্ছি — এটাই আমাদের সর্বোচ্চ ছাড়। কোনো কেমিক্যাল বা প্রিজারভেটিভ ছাড়া ঘরোয়া পরিবেশে তৈরি পণ্য এই দামে সত্যিই অনেক সাশ্রয়ী।
+
+প্রশ্ন: একসাথে কি একাধিক পণ্য নেওয়া যাবে?
+উত্তর: জি স্যার, অবশ্যই। একসাথে একাধিক পণ্য নিলে ডেলিভারি চার্জ সাশ্রয় হবে।
+
+## অর্ডার নেওয়ার নিয়ম:
+কাস্টমার অর্ডার করতে চাইলে নাম, ঠিকানা ও মোবাইল নম্বর নাও।
+
+⚠️ গুরুত্বপূর্ণ: কাস্টমার যদি একটি মেসেজে নাম + ঠিকানা + মোবাইল একসাথে দেয়, তাহলে আর কিছু জিজ্ঞেস করবে না। সরাসরি confirm করো।
+
+অর্ডার confirm হলে বলো:
+"আপনার অর্ডারটি রিসিভ করা হয়েছে। আমাদের একজন প্রতিনিধি আপনাকে ফোন দিয়ে নিশ্চিত করে পণ্যটি পাঠিয়ে দেবে। ধন্যবাদ! 😊"
+
+## HANDOVER নিয়ম:
 নিচের যেকোনো পরিস্থিতিতে শুধু এই JSON রিটার্ন করো, অন্য কিছু না:
 {"handover": true}
 
@@ -56,8 +137,11 @@ HANDOVER নিয়ম:
 """
 
 conversation_history: dict[str, list] = {}
-human_handover_users: set[str] = set()
-processed_message_ids: set[str] = set()  # ডাবল মেসেজ রোধে
+human_handover_users: dict[str, float] = {}
+processed_message_ids: set[str] = set()
+echo_followup_sent: set[str] = set()  # echo reply এর পর follow-up পাঠানো হয়েছে কিনা
+
+HANDOVER_TIMEOUT = 1200  # ২০ মিনিট
 
 def needs_handover(ai_response: str) -> bool:
     try:
@@ -131,7 +215,6 @@ async def verify_webhook(request: Request):
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
-    # ── Signature check ──
     signature = request.headers.get("X-Hub-Signature", "")
     body = await request.body()
 
@@ -139,8 +222,6 @@ async def handle_webhook(request: Request):
         return Response(content="Invalid signature", status_code=403)
 
     data = json.loads(body)
-
-    # ── Facebook এর object type check ──
     if data.get("object") != "page":
         return Response(content="Not a page event", status_code=404)
 
@@ -152,23 +233,32 @@ async def handle_webhook(request: Request):
             if not sender_id:
                 continue
 
-            # ── Echo বা Page নিজের message এড়াও (ডাবল রিপ্লাই বন্ধ) ──
             msg = event.get("message", {})
+
+            # ── Facebook automated/echo reply detect ──
             if msg.get("is_echo"):
+                # Page নিজে message পাঠালে recipient এর কাছে follow-up দেবে
+                customer_id = recipient_id
+                if customer_id and customer_id not in echo_followup_sent:
+                    echo_followup_sent.add(customer_id)
+                    # ছোট delay দিয়ে follow-up পাঠাও
+                    time.sleep(2)
+                    send_message(
+                        customer_id,
+                        "আর কোনো তথ্য দিয়ে সহযোগিতা করতে পারি স্যার?"
+                    )
+                    print(f"Echo follow-up sent to {customer_id}")
                 continue
 
-            # ── Page নিজে sender হলে skip ──
             if sender_id == recipient_id:
                 continue
 
-            # ── Duplicate message ID check ──
             mid = msg.get("mid", "")
             if mid and mid in processed_message_ids:
-                print(f"Duplicate message skipped: {mid}")
+                print(f"Duplicate skipped: {mid}")
                 continue
             if mid:
                 processed_message_ids.add(mid)
-                # Memory overflow রোধে পুরনো IDs মুছো
                 if len(processed_message_ids) > 1000:
                     processed_message_ids.clear()
 
@@ -176,14 +266,27 @@ async def handle_webhook(request: Request):
             if not text:
                 continue
 
+            # কাস্টমার message করলে echo follow-up reset করো
+            echo_followup_sent.discard(sender_id)
+
             print(f"Message from {sender_id}: {text}")
 
-            # ── Live Agent এ থাকলে AI চুপ ──
             if sender_id in human_handover_users:
-                print(f"AI paused for {sender_id}")
-                continue
+                handover_time = human_handover_users[sender_id]
+                elapsed = time.time() - handover_time
 
-            # ── AI Reply ──
+                if elapsed >= HANDOVER_TIMEOUT:
+                    del human_handover_users[sender_id]
+                    print(f"Handover timeout — AI resuming for {sender_id}")
+                else:
+                    send_message(
+                        sender_id,
+                        "স্যার, আমাদের প্রতিনিধি এখন ব্যস্ত আছেন। "
+                        "আপনি সরাসরি আমাদের হেল্পলাইনে যোগাযোগ করতে পারেন: "
+                        "01712775905 অথবা WhatsApp: +8801312656607"
+                    )
+                    continue
+
             try:
                 reply = get_ai_reply(sender_id, text)
             except Exception as e:
@@ -194,20 +297,25 @@ async def handle_webhook(request: Request):
                 print(f"Handover triggered for {sender_id}")
                 send_message(
                     sender_id,
-                    "আপনার মেসেজটি একজন Live Agent এর কাছে ট্রান্সফার করা হচ্ছে। অনুগ্রহ করে একটু অপেক্ষা করুন।"
+                    "আপনার মেসেজটি একজন Live Agent এর কাছে ট্রান্সফার করা হচ্ছে। "
+                    "অনুগ্রহ করে একটু অপেক্ষা করুন। 🙏"
                 )
                 request_human_handover(sender_id)
-                human_handover_users.add(sender_id)
+                human_handover_users[sender_id] = time.time()
             else:
                 send_message(sender_id, reply)
                 print(f"Reply sent: {reply[:80]}...")
 
-    # ── সবসময় 200 OK রিটার্ন করো, নইলে Facebook বারবার retry করবে ──
-    return Response(content=json.dumps({"status": "ok"}), status_code=200, media_type="application/json")
+    return Response(
+        content=json.dumps({"status": "ok"}),
+        status_code=200,
+        media_type="application/json"
+    )
 
 @app.post("/resume/{sender_id}")
 async def resume_ai(sender_id: str):
-    human_handover_users.discard(sender_id)
+    if sender_id in human_handover_users:
+        del human_handover_users[sender_id]
     conversation_history.pop(sender_id, None)
     return {"status": "resumed", "sender_id": sender_id}
 
