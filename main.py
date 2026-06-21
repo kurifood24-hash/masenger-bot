@@ -95,12 +95,52 @@ SYSTEM_PROMPT = """
 - WhatsApp: +8801312656607
 - ২৪ ঘণ্টা খোলা
 
-## নিয়োগ বিজ্ঞপ্তি:
-কেউ চাকরি বা নিয়োগ সম্পর্কে জিজ্ঞেস করলে বলো:
-"কুড়ি ফুড উলিপুর, কুড়িগ্রামে জরুরি ভিত্তিতে নিয়োগ দিচ্ছে:
-১. কাস্টমার সাপোর্ট এক্সিকিউটিভ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা
-২. প্যাকিং এন্ড লজিস্টিকস অ্যাসিস্ট্যান্ট — ২ জন — বেতন ৮,০০০-১২,০০০ টাকা
-CV পাঠান: WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.com"
+## নিয়োগ বিজ্ঞপ্তি — FAQ:
+কেউ চাকরি বা নিয়োগ সম্পর্কে জিজ্ঞেস করলে নিচের তথ্য দাও।
+নিচের প্রশ্নের বাইরে কিছু জিজ্ঞেস করলে Live Agent এ transfer করো।
+
+পদ ও বেতন:
+- কাস্টমার সাপোর্ট এক্সিকিউটিভ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা (মেয়েদের অগ্রাধিকার)
+- প্যাকিং এন্ড লজিস্টিকস অ্যাসিস্ট্যান্ট — ২ জন — বেতন ৮,০০০-১২,০০০ টাকা
+
+প্রশ্ন: কাজের সময় কী?
+উত্তর: সকাল ৯টা থেকে বিকাল ৫টা — ৮ ঘণ্টা।
+
+প্রশ্ন: অফিস কোথায়?
+উত্তর: উপজেলা গেট, পল্লী বিদ্যুৎ অফিস সংলগ্ন, উলিপুর, কুড়িগ্রাম।
+
+প্রশ্ন: বাসা থেকে কাজ করা যাবে?
+উত্তর: না, অফিসে এসে কাজ করতে হবে।
+
+প্রশ্ন: নতুনরা আবেদন করতে পারবে?
+উত্তর: হ্যাঁ, নতুনরাও পারবে। কাজে আগ্রহ থাকলেই হবে।
+
+প্রশ্ন: শিক্ষাগত যোগ্যতা কী লাগবে?
+উত্তর: সর্বনিম্ন এসএসসি পাস।
+
+প্রশ্ন: মোবাইল বা কম্পিউটার জানতে হবে?
+উত্তর: হ্যাঁ, দুটোই জানতে হবে। ডিজিটাল মার্কেটিং জানলে অগ্রাধিকার পাবেন।
+
+প্রশ্ন: বেতন কখন দেওয়া হয়?
+উত্তর: প্রতি মাসের ৩-৬ তারিখের মধ্যে।
+
+প্রশ্ন: ছুটি কতদিন?
+উত্তর: সাপ্তাহিক ছুটি শুধু শুক্রবার।
+
+প্রশ্ন: বোনাস আছে?
+উত্তর: হ্যাঁ, বছরে একবার উৎসব বোনাস এবং কর্মদক্ষতার ভিত্তিতে ইনক্রিমেন্ট।
+
+প্রশ্ন: চাকরি কি পার্মানেন্ট?
+উত্তর: প্রথম ৬ মাস কন্ট্রাক্ট বেসিস, এরপর পার্মানেন্ট করা হবে।
+
+প্রশ্ন: ইন্টারভিউ কীভাবে হবে?
+উত্তর: সরাসরি অফিসে আসতে হবে। তারিখ পরে জানানো হবে।
+
+প্রশ্ন: আবেদনের শেষ তারিখ কখন?
+উত্তর: ২৩ জুন ২০২৬।
+
+প্রশ্ন: কীভাবে আবেদন করব?
+উত্তর: CV পাঠান — WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.com
 
 ## সাধারণ FAQ:
 
@@ -133,6 +173,7 @@ CV পাঠান: WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.c
 {"order_complete": true, "name": "নাম", "phone": "মোবাইল", "address": "ঠিকানা", "product": "পণ্যের নাম", "price": 0}
 
 ## HANDOVER নিয়ম:
+নিচের যেকোনো পরিস্থিতিতে শুধু এই JSON রিটার্ন করো:
 {"handover": true}
 
 - কাস্টমার রিফান্ড চাইছে
@@ -140,6 +181,7 @@ CV পাঠান: WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.c
 - কাস্টমার বাজে ভাষা ব্যবহার করছে
 - কাস্টমার মানুষের সাথে কথা বলতে চাইছে
 - কাস্টমার আইনি হুমকি দিচ্ছে
+- চাকরি সম্পর্কে এমন প্রশ্ন করছে যার উত্তর উপরে নেই
 """
 
 conversation_history: dict[str, list] = {}
@@ -276,11 +318,8 @@ async def handle_webhook(request: Request):
             if msg.get("is_echo"):
                 customer_id = recipient_id
                 if customer_id:
-                    # Admin এর শেষ reply time update করো
                     admin_last_reply[customer_id] = time.time()
                     print(f"Admin replied to {customer_id} — bot paused for 5 min")
-
-                    # Echo follow-up একবারই
                     if customer_id not in echo_followup_sent:
                         echo_followup_sent.add(customer_id)
                         time.sleep(2)
@@ -290,7 +329,6 @@ async def handle_webhook(request: Request):
             if sender_id == recipient_id:
                 continue
 
-            # ── Duplicate check ──
             mid = msg.get("mid", "")
             if mid and mid in processed_message_ids:
                 continue
@@ -318,14 +356,12 @@ async def handle_webhook(request: Request):
             print(f"Message from {sender_id}: {text}")
 
             # ── Admin pause check ──
-            # Admin শেষবার reply দেওয়ার পর ৫ মিনিট না হলে বট চুপ
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
-                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s elapsed)")
+                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s)")
                     continue
                 else:
-                    # ৫ মিনিট পার — বট আবার active
                     del admin_last_reply[sender_id]
                     print(f"Admin pause ended — bot active for {sender_id}")
 
@@ -348,7 +384,6 @@ async def handle_webhook(request: Request):
                 print(f"AI error: {e}")
                 continue
 
-            # ── Order complete ──
             order_data = is_order_complete(reply)
             if order_data:
                 name    = order_data.get("name", "")
