@@ -71,9 +71,11 @@ SYSTEM_PROMPT = """
 - বালাচাও — ১০০ গ্রাম/১৫০ টাকা | ২০০ গ্রাম/২৫০ টাকা | ৪০০ গ্রাম/৪৫০ টাকা
 - গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
 
-### হাড়িভাঙ্গা আম (প্রি-অর্ডার):
+### হাড়িভাঙ্গা আম (প্রি-অর্ডার চলছে):
+- ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি রংপুরের বাগান থেকে
+- আঁশহীন, ছোট আঁটি, রসে ভরপুর — গড়ে ৩-৪টি আমে ১ কেজি
 - ১০ কেজি — ১,২০০ টাকা (ডেলিভারি ফ্রি)
-- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি ফ্রি)
+- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
 - সম্ভাব্য ডেলিভারি: ২১-২৩ জুন
 - ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট, রংপুর — ক্যাশ অন ডেলিভারি
 - অন্য জেলায় — ৫০% অগ্রিম পেমেন্ট
@@ -93,6 +95,13 @@ SYSTEM_PROMPT = """
 - WhatsApp: +8801312656607
 - ২৪ ঘণ্টা খোলা
 
+## নিয়োগ বিজ্ঞপ্তি:
+কেউ চাকরি বা নিয়োগ সম্পর্কে জিজ্ঞেস করলে বলো:
+"কুড়ি ফুড উলিপুর, কুড়িগ্রামে জরুরি ভিত্তিতে নিয়োগ দিচ্ছে:
+১. কাস্টমার সাপোর্ট এক্সিকিউটিভ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা
+২. প্যাকিং এন্ড লজিস্টিকস অ্যাসিস্ট্যান্ট — ২ জন — বেতন ৮,০০০-১২,০০০ টাকা
+CV পাঠান: WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.com"
+
 ## সাধারণ FAQ:
 
 প্রশ্ন: আচার কতদিন ভালো থাকে?
@@ -108,13 +117,13 @@ SYSTEM_PROMPT = """
 উত্তর: ১২৫০ টাকার পণ্য ৯৯০ টাকায় দিচ্ছি — এটাই সর্বোচ্চ ছাড়।
 
 প্রশ্ন: মিক্সড শুটকিতে কী আছে?
-উত্তর: কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে তৈরি।
-
-প্রশ্ন: আমের দাম এত বেশি কেন?
-উত্তর: স্যার, বাজারের অনেক আম অপরিপক্ক অবস্থায় তুলে ফরমালিন দিয়ে পাকানো হয়, যা স্বাস্থ্যের জন্য ক্ষতিকর। আমাদের হাড়িভাঙ্গা আম সরাসরি রংপুরের বাগান থেকে পরিপক্ক অবস্থায় সংগ্রহ করা — ১০০% ফরমালিনমুক্ত। তাছাড়া হাড়িভাঙ্গা আম আকারে বড় — গড়ে মাত্র ৩-৪টিতেই ১ কেজি। তাই দাম একটু বেশি হলেও আসল স্বাদ ও নিরাপদ আম পাচ্ছেন।
+উত্তর: কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
 
 প্রশ্ন: সরিষার তেল পাওয়া যায়?
 উত্তর: এখনো বাজারে আসেনি, শীঘ্রই আসবে।
+
+প্রশ্ন: আমের দাম এত বেশি কেন?
+উত্তর: স্যার, বাজারের অনেক আম অপরিপক্ক অবস্থায় তুলে ফরমালিন দিয়ে পাকানো হয়। আমাদের হাড়িভাঙ্গা আম সরাসরি রংপুরের বাগান থেকে পরিপক্ক অবস্থায় সংগ্রহ করা — ১০০% ফরমালিনমুক্ত। গড়ে মাত্র ৩-৪টিতেই ১ কেজি — তাই দাম একটু বেশি হলেও আসল স্বাদ ও নিরাপদ আম পাচ্ছেন।
 
 ## অর্ডার নেওয়ার নিয়ম:
 নাম, ঠিকানা ও মোবাইল নম্বর নাও।
@@ -134,7 +143,6 @@ SYSTEM_PROMPT = """
 """
 
 conversation_history: dict[str, list] = {}
-# sender_id -> last time admin replied
 admin_last_reply: dict[str, float] = {}
 human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
@@ -268,11 +276,11 @@ async def handle_webhook(request: Request):
             if msg.get("is_echo"):
                 customer_id = recipient_id
                 if customer_id:
-                    # Admin reply time reset করো
+                    # Admin এর শেষ reply time update করো
                     admin_last_reply[customer_id] = time.time()
-                    print(f"Admin replied to {customer_id} — bot paused")
+                    print(f"Admin replied to {customer_id} — bot paused for 5 min")
 
-                    # Echo follow-up (একবারই)
+                    # Echo follow-up একবারই
                     if customer_id not in echo_followup_sent:
                         echo_followup_sent.add(customer_id)
                         time.sleep(2)
@@ -291,7 +299,7 @@ async def handle_webhook(request: Request):
                 if len(processed_message_ids) > 1000:
                     processed_message_ids.clear()
 
-            # ── Voice message check ──
+            # ── Voice message ──
             attachments = msg.get("attachments", [])
             has_audio = any(a.get("type") == "audio" for a in attachments)
             if has_audio:
@@ -309,13 +317,15 @@ async def handle_webhook(request: Request):
             echo_followup_sent.discard(sender_id)
             print(f"Message from {sender_id}: {text}")
 
-            # ── Admin pause check — শেষ reply থেকে ৫ মিনিট ──
+            # ── Admin pause check ──
+            # Admin শেষবার reply দেওয়ার পর ৫ মিনিট না হলে বট চুপ
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
-                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s)")
+                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s elapsed)")
                     continue
                 else:
+                    # ৫ মিনিট পার — বট আবার active
                     del admin_last_reply[sender_id]
                     print(f"Admin pause ended — bot active for {sender_id}")
 
