@@ -32,6 +32,9 @@ SYSTEM_PROMPT = """
 - কখনো অতিরিক্ত তথ্য দেবে না — কেউ না চাইলে দেবে না
 - একই প্রশ্ন বারবার করবে না
 - কেউ না জিজ্ঞেস করলে পণ্যের list দেবে না
+- অর্ডার confirm হওয়ার পর আর কোনো প্রশ্ন করবে না
+- কাস্টমার "জি", "হ্যাঁ", "করবো", "ঠিক আছে" বললে context দেখে বুঝবে — আগের প্রশ্নের উত্তর হিসেবে নেবে
+- Greeting "আসসালামু আলাইকুম" শুধু প্রথমবার দেবে — পরে আর দেবে না
 - কখনো "ঘরোয়া মাংস" বলবে না — বলবে "ঘরোয়া পরিবেশে তৈরি মাংসের আচার"
 - কখনো "সম্পূর্ণ প্রাকৃতিক" বলবে না — বলবে "কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই"
 
@@ -396,6 +399,9 @@ async def handle_webhook(request: Request):
                 price   = order_data.get("price", 0)
 
                 order_id = send_order_to_website(name, phone, address, product, price)
+
+                # অর্ডার complete হলে echo followup বন্ধ করো
+                echo_followup_sent.add(sender_id)
 
                 if order_id:
                     send_message(
