@@ -195,6 +195,7 @@ admin_last_reply: dict[str, float] = {}
 human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
 echo_followup_sent: set[str] = set()
+order_done_users: set[str] = set()  # একবার অর্ডার হলে আর অর্ডার নেবে না
 
 ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
 
@@ -391,7 +392,7 @@ async def handle_webhook(request: Request):
                 continue
 
             order_data = is_order_complete(reply)
-            if order_data:
+            if order_data and sender_id not in order_done_users:
                 name    = order_data.get("name", "")
                 phone   = order_data.get("phone", "")
                 address = order_data.get("address", "")
@@ -400,7 +401,8 @@ async def handle_webhook(request: Request):
 
                 order_id = send_order_to_website(name, phone, address, product, price)
 
-                # অর্ডার complete হলে echo followup বন্ধ করো
+                # অর্ডার complete হলে flag set করো — আর অর্ডার নেবে না
+                order_done_users.add(sender_id)
                 echo_followup_sent.add(sender_id)
 
                 if order_id:
@@ -416,6 +418,9 @@ async def handle_webhook(request: Request):
                         "আপনার অর্ডারটি রিসিভ করা হয়েছে। "
                         "আমাদের প্রতিনিধি ফোন দিয়ে নিশ্চিত করবে। ধন্যবাদ! 😊"
                     )
+            elif order_data and sender_id in order_done_users:
+                # ইতিমধ্যে অর্ডার হয়েছে — স্বাভাবিক reply দাও
+                send_message(sender_id, reply)
 
             elif needs_handover(reply):
                 print(f"Handover triggered for {sender_id}")
@@ -441,6 +446,7 @@ async def resume_ai(sender_id: str):
     human_handover_users.pop(sender_id, None)
     admin_last_reply.pop(sender_id, None)
     conversation_history.pop(sender_id, None)
+    order_done_users.discard(sender_id)
     return {"status": "resumed", "sender_id": sender_id}
 
 @app.get("/")
