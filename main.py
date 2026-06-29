@@ -19,12 +19,12 @@ APP_SECRET        = os.getenv("APP_SECRET")
 GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
 KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
 KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
-FB_PAGE_ID        = str(os.getenv("FB_PAGE_ID", "61580033922376"))  # Page ID নিশ্চিত করা হলো
+FB_PAGE_ID        = str(os.getenv("FB_PAGE_ID", "61580033922376"))  # স্ট্রিং হিসেবে নিশ্চিত করা হলো
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 SYSTEM_PROMPT = """
-তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি অনলাইন ফুড ব্র্যান্ডের AI সহকারী।
+তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি online ফুড ব্র্যান্ডের AI সহকারী।
 তুমি সবসময় বাংলায় কথা বলো। ইংরেজিতে প্রশ্ন করলেও বাংলায় উত্তর দাও।
 কাস্টমারকে সবসময় "স্যার" বলে সম্বোধন করো।
 
@@ -43,7 +43,7 @@ SYSTEM_PROMPT = """
 - কাস্টমার যদি প্রথম মেসেজেই নাম+ঠিকানা+মোবাইল দেয় তাহলে সালাম না দিয়ে বলো: "স্যার, আপনার তথ্য পেয়েছি। আপনি কি আমাদের স্পেশাল মাংসের আচার কম্বো (৯৯০ টাকা) নিতে চাচ্ছেন?"
 - কাস্টমারের নাম দেখে যদি হিন্দু মনে হয় তাহলে বলো: "কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
 - অন্য সবার ক্ষেত্রে বলো: "আসসালামু আলাইকুম! কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
-- পরবর্তী মেসেজে আর নিজের নাম বলবে না।
+- পরবর্তী মেসেজে আর নিজের নাম বলবে না。
 
 ## পণ্য নিয়ে নিয়ম:
 - কেউ "আচার" বা "দাম" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজ বলো প্রথমে
@@ -90,7 +90,7 @@ SYSTEM_PROMPT = """
 - দাম: ৬৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 **বালাচাও ট্রাইও ফ্যামিলি কম্বো (ডেলিভারি ফ্রি):**
-- বিফ বালাচাও ২০০গ্রাম + চিকেন বালাচাও ২০০গ্রাম + চিংড়ি বালাচাও ২০০গ্রাম = মোট ৬০০গ্রাম
+- বিফ বালাচাও ۲۰۰গ্রাম + চিকেন বালাচাও ۲۰۰গ্রাম + চিংড়ি বালাচাও ۲۰۰গ্রাম = মোট ৬০০গ্রাম
 - দাম: ১২৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 উভয় প্যাকেজে:
@@ -102,7 +102,7 @@ SYSTEM_PROMPT = """
 **আলাদা বালাচাও (ডেলিভারি ৭০ টাকা):**
 - চিংড়ি বালাচাও: ১০০গ্রাম = ২২০ টাকা | ২০০গ্রাম = ৪০০ টাকা
 - চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ২০০গ্রাম = ৫৫০ টাকা
-- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ২০০গ্রাম = ৯৫০ টাকা
+- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ۲۰۰গ্রাম = ৯৫০ টাকা
 
 ⚠️ বালাচাও দাম নিয়ে নিয়ম:
 - কেউ শুধু "বালাচাও দাম কত" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজের দাম বলো
@@ -158,7 +158,7 @@ SYSTEM_PROMPT = """
 নিচের প্রশ্নের বাইরে কিছু জিজ্ঞেস করলে Live Agent এ transfer করো।
 
 পদ ও বেতন:
-- কাস্টমার সাপোর্ট এক্সিকিউটিভ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা (মেয়েদের অগ্রাধিকার)
+- কাস্টমার সাপোর্ট এক্সিকিউティブ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা (মেয়েদের অগ্রাধিকার)
 - প্যাকিং এন্ড লজিস্টিকস অ্যাসিস্ট্যান্ট — ২ জন — বেতন ৮,০০০-১২,০০০ টাকা
 
 প্রশ্ন: কাজের সময় কী?
@@ -215,7 +215,7 @@ SYSTEM_PROMPT = """
 উত্তর: ১২৫০ টাকার পণ্য ৯৯০ টাকায় দিচ্ছি — এটাই সর্বোচ্চ ছাড়।
 
 প্রশ্ন: মিক্সড শুটকিতে কী আছে?
-উত্তর: কাঁচকি, মলা ও ছোট টেংরা, پانچমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
+উত্তর: কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
 
 প্রশ্ন: সরিষার তেল পাওয়া যায়?
 উত্তর: এখনো বাজারে আসেনি, শীঘ্রই আসবে।
@@ -263,7 +263,7 @@ human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
 order_done_users: set[str] = set()  
 
-ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
+ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট পজ লক
 
 def send_order_to_website(name, phone, address, product, price=0):
     try:
@@ -388,12 +388,19 @@ async def handle_webhook(request: Request):
             msg = event.get("message", {})
             is_echo = msg.get("is_echo", False)
 
-            # ── [বুলেটপ্রুফ ফিক্স] এডমিন মেটা অ্যাপ বা অন্য কোথাও থেকে রেসপন্স করলেই বট ৫ মিনিট পজ হবে ──
-            if is_echo or sender_id == FB_PAGE_ID:
+            # ── [অটোমেটিক স্টপ ফিক্স] এডমিন নিজে কথা বললেই (Echo বা Direct ID ম্যাচিং) ৫ মিনিট পজ হবে ──
+            if is_echo:
                 customer_id = recipient_id
                 if customer_id and customer_id != FB_PAGE_ID:
                     admin_last_reply[customer_id] = time.time()
-                    print(f"Admin intercepted. Bot completely paused for customer: {customer_id}")
+                    print(f"[AUTO-PAUSE] Admin message sent to {customer_id}. Bot paused.")
+                continue
+
+            if sender_id == FB_PAGE_ID or sender_id == recipient_id:
+                customer_id = recipient_id if sender_id == FB_PAGE_ID else sender_id
+                if customer_id and customer_id != FB_PAGE_ID:
+                    admin_last_reply[customer_id] = time.time()
+                    print(f"[AUTO-PAUSE] Admin active on {customer_id}. Bot paused.")
                 continue
 
             mid = msg.get("mid", "")
@@ -404,7 +411,7 @@ async def handle_webhook(request: Request):
                 if len(processed_message_ids) > 1000:
                     processed_message_ids.clear()
 
-            # ── Voice message ──
+            # Voice message
             attachments = msg.get("attachments", [])
             has_audio = any(a.get("type") == "audio" for a in attachments)
             if has_audio:
@@ -421,16 +428,16 @@ async def handle_webhook(request: Request):
 
             print(f"Message from {sender_id}: {text}")
 
-            # ── Admin pause check ──
+            # ── Admin pause check (এডমিন কথা বলে থাকলে বট এখানে এসে স্কিপ করবে) ──
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
-                    print(f"Admin active — skipping AI reply for {sender_id} ({int(elapsed)}s)")
+                    print(f"Skipping AI response. Admin is currently handling {sender_id}.")
                     continue
                 else:
                     del admin_last_reply[sender_id]
 
-            # ── Handover check ──
+            # Handover check
             if sender_id in human_handover_users:
                 elapsed = time.time() - human_handover_users[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
@@ -517,14 +524,3 @@ async def pause_bot(sender_id: str, minutes: int = 10):
 @app.get("/pause/{sender_id}")
 async def pause_bot_default(sender_id: str):
     sender_id = str(sender_id)
-    admin_last_reply[sender_id] = time.time()
-    return {"status": "paused", "sender_id": sender_id, "minutes": 10}
-
-@app.get("/")
-async def root():
-    return {"status": "running", "bot": "Kuri Food Customer Care"}
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
