@@ -70,7 +70,7 @@ SYSTEM_PROMPT = """
 - ডেলিভারি: বিনামূল্যে
 
 ### আলাদা মাংসের আচার:
-- শুধু গরুর মাংসের আচার — ৩০০ মিলি — ৫৫০ টাকা
+- শুধু গরুর মাংসের আচার — ৩০০ মিলি — ৫৫৫ টাকা
 - শুধু হাঁসের মাংসের আচার — ৩০০ মিলি — ৪৫০ টাকা
 - শুধু মুরগির মাংসের আচার — ৩০০ মিলি — ৩৫০ টাকা
 
@@ -91,7 +91,7 @@ SYSTEM_PROMPT = """
 
 **বালাচাও ট্রাইও ফ্যামিলি কম্বো (ডেলিভারি ফ্রি):**
 - বিফ বালাচাও ২০০গ্রাম + চিকেন বালাচাও ২০০গ্রাম + চিংড়ি বালাচাও ২০০গ্রাম = মোট ৬০০গ্রাম
-- দাম: ১২৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
+- দাম: ১২৯০০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 উভয় প্যাকেজে:
 - ১০০% খাঁটি সরিষার তেলে তৈরি, কোনো প্রিজারভেটিভ নেই
@@ -100,9 +100,9 @@ SYSTEM_PROMPT = """
 - চিংড়ি বালাচাও: বালু ও লবণমুক্ত চিংড়ি শুঁটকি
 
 **আলাদা বালাচাও (ডেলিভারি ৭০ টাকা):**
-- চিংড়ি বালাচাও: ১০০গ্রাম = ২২০ টাকা | ২০০গ্রাম = ৪০০ টাকা
-- চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ২০০গ্রাম = ৫৫০ টাকা
-- বিফ বালাচাও: ১০০গ্রাম = ৩৫০ টাকা | ২০০গ্রাম = ৯৫০ টাকা
+- চিংড়ি বালাচাও: ১০০গ্রাম = ২২০ টাকা | ۲۰۰গ্রাম = ৪০০ টাকা
+- চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ۲۰۰গ্রাম = ৫৫০ টাকা
+- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ۲۰۰গ্রাম = ৯৫০ টাকা
 
 ⚠️ বালাচাও দাম নিয়ে নিয়ম:
 - কেউ শুধু "বালাচাও দাম কত" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজের দাম বলো
@@ -114,8 +114,7 @@ SYSTEM_PROMPT = """
 - ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি রংপুরের বাগান থেকে
 - আঁশহীন, ছোট আঁটি, রসে ভরপুর — গড়ে ৩-৪টি আমে ১ কেজি
 - ১০ কেজি — ১,২০০ টাকা (ডেলিভারি ফ্রি)
-- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
-- সম্ভাব্য ডেলিভারি: ২১-২৩ জুন
+- ২০ কেজি — ২,২০০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
 - ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট, রংপুর — ক্যাশ অন ডেলিভারি
 - অন্য জেলায় — ৫০% অগ্রিম পেমেন্ট
 
@@ -223,6 +222,9 @@ SYSTEM_PROMPT = """
 প্রশ্ন: বালাচাও কম্বো প্যাকেজে কী আছে?
 উত্তর: স্যার, আমাদের বালাচাও ট্রাইও কম্বো প্যাকেজে আছে বিফ বালাচাও, চিকেন বালাচাও ও চিংড়ি বালাচাও — প্রতিটি ১০০ গ্রাম করে মোট ৩০০ গ্রাম। দাম মাত্র ৬৯০ টাকা এবং ডেলিভারি সম্পূর্ণ ফ্রি।
 
+প্রশ্ন: বালাচাও কম্বোর ছবি দেখতে চাই?
+উত্তর: স্যার, বালাচাও কম্বো প্যাকেজের ছবি দেখতে এই লিংকে যান: https://www.facebook.com/share/19A9TqB7Vd/
+
 প্রশ্ন: বালাচাও কম্বোতে কি ডেলিভারি ফ্রি?
 উত্তর: জি স্যার, শুধুমাত্র বালাচাও ট্রাইও কম্বো প্যাকেজে ডেলিভারি সম্পূর্ণ ফ্রি। অন্য পণ্যে ৭০ টাকা ডেলিভারি চার্জ প্রযোজ্য।
 
@@ -258,7 +260,6 @@ conversation_history: dict[str, list] = {}
 admin_last_reply: dict[str, float] = {}
 human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
-echo_followup_sent: set[str] = set()
 order_done_users: set[str] = set()  # একবার অর্ডার হলে আর অর্ডার নেবে না
 
 ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
@@ -387,21 +388,16 @@ async def handle_webhook(request: Request):
 
             # ── Echo — Admin reply করেছে ──
             if msg.get("is_echo"):
-                customer_id = recipient_id
+                customer_id = str(recipient_id) if recipient_id else None
                 if customer_id:
                     admin_last_reply[customer_id] = time.time()
                     print(f"Admin replied to {customer_id} — bot paused for 5 min")
-                    if customer_id not in echo_followup_sent:
-                        echo_followup_sent.add(customer_id)
-                        time.sleep(2)
-                        send_message(customer_id, "আর কোনো তথ্য দিয়ে সহযোগিতা করতে পারি স্যার?")
                 continue
 
             # ── Page নিজে sender হলে (admin reply) — বট pause করো ──
-            if sender_id == FB_PAGE_ID or sender_id == recipient_id:
-                # Admin reply করেছে — pause timer set করো
-                customer_id = recipient_id
-                if customer_id and customer_id != FB_PAGE_ID:
+            if str(sender_id) == str(FB_PAGE_ID) or str(sender_id) == str(recipient_id):
+                customer_id = str(recipient_id) if recipient_id else None
+                if customer_id and customer_id != str(FB_PAGE_ID):
                     admin_last_reply[customer_id] = time.time()
                     print(f"Admin replied to {customer_id} — bot paused for 5 min")
                 continue
@@ -429,17 +425,16 @@ async def handle_webhook(request: Request):
             if not text:
                 continue
 
-            echo_followup_sent.discard(sender_id)
             print(f"Message from {sender_id}: {text}")
 
             # ── Admin pause check ──
-            if sender_id in admin_last_reply:
-                elapsed = time.time() - admin_last_reply[sender_id]
+            if str(sender_id) in admin_last_reply:
+                elapsed = time.time() - admin_last_reply[str(sender_id)]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
                     print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s)")
                     continue
                 else:
-                    del admin_last_reply[sender_id]
+                    del admin_last_reply[str(sender_id)]
                     print(f"Admin pause ended — bot active for {sender_id}")
 
             # ── Handover check ──
@@ -473,7 +468,6 @@ async def handle_webhook(request: Request):
 
                 # অর্ডার complete হলে flag set করো — আর অর্ডার নেবে না
                 order_done_users.add(sender_id)
-                echo_followup_sent.add(sender_id)
 
                 if order_id:
                     send_message(
@@ -518,7 +512,7 @@ async def handle_webhook(request: Request):
 @app.post("/resume/{sender_id}")
 async def resume_ai(sender_id: str):
     human_handover_users.pop(sender_id, None)
-    admin_last_reply.pop(sender_id, None)
+    admin_last_reply.pop(str(sender_id), None)
     conversation_history.pop(sender_id, None)
     order_done_users.discard(sender_id)
     return {"status": "resumed", "sender_id": sender_id}
@@ -526,12 +520,12 @@ async def resume_ai(sender_id: str):
 @app.get("/pause/{sender_id}/{minutes}")
 async def pause_bot(sender_id: str, minutes: int = 10):
     seconds = minutes * 60
-    admin_last_reply[sender_id] = time.time() + seconds - ADMIN_PAUSE_TIMEOUT
+    admin_last_reply[str(sender_id)] = time.time() + seconds - ADMIN_PAUSE_TIMEOUT
     return {"status": "paused", "sender_id": sender_id, "minutes": minutes}
 
 @app.get("/pause/{sender_id}")
 async def pause_bot_default(sender_id: str):
-    admin_last_reply[sender_id] = time.time()
+    admin_last_reply[str(sender_id)] = time.time()
     return {"status": "paused", "sender_id": sender_id, "minutes": 10}
 
 @app.get("/")
