@@ -20,6 +20,7 @@ GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
 KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
 KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
 FB_PAGE_ID        = os.getenv("FB_PAGE_ID", "61580033922376")  # Kuri Food Page ID
+ADMIN_FB_IDS      = set(x.strip() for x in os.getenv("ADMIN_FB_IDS", "").split(",") if x.strip())
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -395,6 +396,11 @@ async def handle_webhook(request: Request):
             recipient_id = event.get("recipient", {}).get("id")
 
             if not sender_id:
+                continue
+
+            # ── এডমিনের নিজের Facebook ID হলে — বট চুপ থাকবে ──
+            if sender_id in ADMIN_FB_IDS:
+                print(f"Message from ADMIN ({sender_id}) — bot silent")
                 continue
 
             msg = event.get("message", {})
