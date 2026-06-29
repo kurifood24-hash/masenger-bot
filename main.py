@@ -263,6 +263,7 @@ human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
 echo_followup_sent: set[str] = set()
 order_done_users: set[str] = set()  # একবার অর্ডার হলে আর অর্ডার নেবে না
+bot_sent_message_ids: set[str] = set()  # বটের নিজের পাঠানো message ID track করতে
 
 ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
 
@@ -330,10 +331,20 @@ def send_message(recipient_id: str, text: str):
     params = {"access_token": PAGE_ACCESS_TOKEN}
     chunks = [text[i:i+1900] for i in range(0, len(text), 1900)]
     for chunk in chunks:
-        requests.post(url, params=params, json={
+        resp = requests.post(url, params=params, json={
             "recipient": {"id": recipient_id},
             "message": {"text": chunk}
         })
+        try:
+            data = resp.json()
+            mid = data.get("message_id")
+            if mid:
+                bot_sent_message_ids.add(mid)
+                if len(bot_sent_message_ids) > 2000:
+                    bot_sent_message_ids.clear()
+                print(f"Bot sent tracked: {mid[:25]}...")
+        except Exception:
+            pass
 
 def get_ai_reply(sender_id: str, user_message: str) -> str:
     history = conversation_history.setdefault(sender_id, [])
@@ -388,20 +399,23 @@ async def handle_webhook(request: Request):
 
             msg = event.get("message", {})
 
-            # ── Echo event (Page থেকে পাঠানো যেকোনো মেসেজ) ──
-            # app_id থাকলে = বট নিজেই Send API দিয়ে পাঠিয়েছে → কিছু করো না
-            # app_id না থাকলে = মানুষ (এডমিন) ইনবক্স থেকে টাইপ করেছে → বট pause করো
+            # ── Echo event ──
+            # বটের নিজের পাঠানো message = bot_sent_message_ids-এ থাকবে → ignore
+            # এডমিন ইনবক্স থেকে টাইপ করলে = list-এ থাকবে না → bot pause
             if msg.get("is_echo"):
-                if msg.get("app_id") is None:
+                echo_mid = msg.get("mid", "")
+                if echo_mid and echo_mid in bot_sent_message_ids:
+                    print(f"Bot own echo — ignored ({echo_mid[:25]}...)")
+                elif echo_mid:
                     customer_id = recipient_id
                     if customer_id and customer_id != FB_PAGE_ID:
                         admin_last_reply[customer_id] = time.time()
-                        print(f"Human admin replied to {customer_id} — bot paused for {ADMIN_PAUSE_TIMEOUT // 60} min")
+                        print(f"*** Human admin replied to {customer_id} — bot PAUSED {ADMIN_PAUSE_TIMEOUT//60} min ***")
                 else:
-                    print(f"Bot's own echo to {recipient_id} — ignored")
+                    print("Echo with no mid — ignored")
                 continue
 
-            # ── Page নিজে sender হলে — এটা কাস্টমার নয়, skip ──
+            # ── Page নিজে sender হলে — skip ──
             if sender_id == FB_PAGE_ID:
                 continue
 
