@@ -14,14 +14,12 @@ load_dotenv()
 app = FastAPI()
 
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
-VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-APP_SECRET = os.getenv("APP_SECRET")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-KURIFOOD_API_URL = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
-KURIFOOD_API_KEY = os.getenv("KURIFOOD_API_KEY")
-
-# পেজ আইডিটিকে স্পষ্টভাবে স্ট্রিং ও ক্লিন করে নেওয়া হলো যেন টাইপ মিসম্যাচ না হয়
-FB_PAGE_ID = str(os.getenv("FB_PAGE_ID", "61580033922376")).strip()
+VERIFY_TOKEN      = os.getenv("VERIFY_TOKEN")
+APP_SECRET        = os.getenv("APP_SECRET")
+GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
+KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
+KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
+FB_PAGE_ID        = os.getenv("FB_PAGE_ID", "61580033922376")  # Kuri Food Page ID
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -82,7 +80,7 @@ SYSTEM_PROMPT = """
 - ইলিশের আচার — ২৫০ গ্রাম/৬৫০ টাকা | ৫০০ গ্রাম/১১৫০ টাকা
 - টক ঝাল মিষ্টি তেঁতুলের আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
 - টক ঝাল মিষ্টি বড়ই আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
-- চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩さい টাকা
+- চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩৫০ টাকা
 
 ### অন্যান্য পণ্য:
 - মিক্সড শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
@@ -110,13 +108,13 @@ SYSTEM_PROMPT = """
 - কেউ শুধু "বালাচাও দাম কত" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজের দাম বলো
 - কেউ specifically "চিংড়ি বালাচাও দাম" বা "চিকেন বালাচাও দাম" জিজ্ঞেস করলে তখন আলাদা দাম বলো
 - সব বালাচাওর দাম একসাথে list করবে না
-- গুড়ের গজা (गुড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
+- গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
 
 ### হাড়িভাঙ্গা আম (প্রি-অর্ডার চলছে):
 - ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি রংপুরের বাগান থেকে
 - আঁশহীন, ছোট আঁটি, রসে ভরপুর — গড়ে ৩-৪টি আমে ১ কেজি
 - ১০ কেজি — ১,২০০ টাকা (ডেলিভারি ফ্রি)
-- ২০ কেজি — ২,২০০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
+- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
 - সম্ভাব্য ডেলিভারি: ২১-২৩ জুন
 - ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট, রংপুর — ক্যাশ অন ডেলিভারি
 - অন্য জেলায় — ৫০% অগ্রিম পেমেন্ট
@@ -160,7 +158,7 @@ SYSTEM_PROMPT = """
 নিচের প্রশ্নের বাইরে কিছু জিজ্ঞেস করলে Live Agent এ transfer করো।
 
 পদ ও বেতন:
-- কাস্টমার সাপোর্ট এক্সিকিউティブ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা (মেয়েদের অগ্রাধিকার)
+- কাস্টমার সাপোর্ট এক্সিকিউটিভ — ২ জন — বেতন ১০,০০০-১৫,০০০ টাকা (মেয়েদের অগ্রাধিকার)
 - প্যাকিং এন্ড লজিস্টিকস অ্যাসিস্ট্যান্ট — ২ জন — বেতন ৮,০০০-১২,০০০ টাকা
 
 প্রশ্ন: কাজের সময় কী?
@@ -200,7 +198,7 @@ SYSTEM_PROMPT = """
 উত্তর: ২৩ জুন ২০২৬।
 
 প্রশ্ন: কীভাবে আবেদন করব?
-উত্তর: CV পাঠান — WhatsApp: 01329909002 अथवा Email: kurifood24@gmail.com
+উত্তর: CV পাঠান — WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.com
 
 ## সাধারণ FAQ:
 
@@ -263,9 +261,10 @@ conversation_history: dict[str, list] = {}
 admin_last_reply: dict[str, float] = {}
 human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
-order_done_users: set[str] = set()  
+echo_followup_sent: set[str] = set()
+order_done_users: set[str] = set()  # একবার অর্ডার হলে আর অর্ডার নেবে না
 
-ADMIN_PAUSE_TIMEOUT = 300 # ৫ মিনিট পজ লক
+ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
 
 def send_order_to_website(name, phone, address, product, price=0):
     try:
@@ -381,22 +380,29 @@ async def handle_webhook(request: Request):
 
     for entry in data.get("entry", []):
         for event in entry.get("messaging", []):
-            sender_id = str(event.get("sender", {}).get("id") or "").strip()
-            recipient_id = str(event.get("recipient", {}).get("id") or "").strip()
+            sender_id = event.get("sender", {}).get("id")
+            recipient_id = event.get("recipient", {}).get("id")
 
             if not sender_id:
                 continue
 
             msg = event.get("message", {})
-            is_echo = msg.get("is_echo", False)
 
-            # ── [১০০% নিশ্চিত অটো-স্টপ ফিক্স] এডমিন কথা বললেই বট ৫ মিনিট লক হবে ──
-            if is_echo or sender_id == FB_PAGE_ID or sender_id == recipient_id:
-                # এডমিন মেসেজ দিলে কাস্টমার আইডি হবে recipient_id, অন্যথায় sender_id
-                customer_id = recipient_id if (is_echo or sender_id == FB_PAGE_ID) else sender_id
-                if customer_id and customer_id != FB_PAGE_ID:
-                    admin_last_reply[customer_id] = time.time()
-                    print(f"[AUTO-PAUSE] Admin active on customer: {customer_id}. Bot paused for 5 mins.")
+            # ── Echo event (Page থেকে পাঠানো যেকোনো মেসেজ) ──
+            # app_id থাকলে = বট নিজেই Send API দিয়ে পাঠিয়েছে → কিছু করো না
+            # app_id না থাকলে = মানুষ (এডমিন) ইনবক্স থেকে টাইপ করেছে → বট pause করো
+            if msg.get("is_echo"):
+                if msg.get("app_id") is None:
+                    customer_id = recipient_id
+                    if customer_id and customer_id != FB_PAGE_ID:
+                        admin_last_reply[customer_id] = time.time()
+                        print(f"Human admin replied to {customer_id} — bot paused for {ADMIN_PAUSE_TIMEOUT // 60} min")
+                else:
+                    print(f"Bot's own echo to {recipient_id} — ignored")
+                continue
+
+            # ── Page নিজে sender হলে — এটা কাস্টমার নয়, skip ──
+            if sender_id == FB_PAGE_ID:
                 continue
 
             mid = msg.get("mid", "")
@@ -407,7 +413,7 @@ async def handle_webhook(request: Request):
                 if len(processed_message_ids) > 1000:
                     processed_message_ids.clear()
 
-            # Voice message
+            # ── Voice message ──
             attachments = msg.get("attachments", [])
             has_audio = any(a.get("type") == "audio" for a in attachments)
             if has_audio:
@@ -422,18 +428,20 @@ async def handle_webhook(request: Request):
             if not text:
                 continue
 
+            echo_followup_sent.discard(sender_id)
             print(f"Message from {sender_id}: {text}")
 
-            # ── Admin pause check (এডমিন একটি মেসেজ দিলেই এই কন্ডিশনটি ট্রু হবে এবং এআই রেসপন্স করবে না) ──
+            # ── Admin pause check ──
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
-                    print(f"Skipping AI response. Admin is currently handling {sender_id}.")
+                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s)")
                     continue
                 else:
                     del admin_last_reply[sender_id]
+                    print(f"Admin pause ended — bot active for {sender_id}")
 
-            # Handover check
+            # ── Handover check ──
             if sender_id in human_handover_users:
                 elapsed = time.time() - human_handover_users[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
@@ -454,14 +462,17 @@ async def handle_webhook(request: Request):
 
             order_data = is_order_complete(reply)
             if order_data and sender_id not in order_done_users:
-                name = order_data.get("name", "")
-                phone = order_data.get("phone", "")
+                name    = order_data.get("name", "")
+                phone   = order_data.get("phone", "")
                 address = order_data.get("address", "")
                 product = order_data.get("product", "")
-                price = order_data.get("price", 0)
+                price   = order_data.get("price", 0)
 
                 order_id = send_order_to_website(name, phone, address, product, price)
+
+                # অর্ডার complete হলে flag set করো — আর অর্ডার নেবে না
                 order_done_users.add(sender_id)
+                echo_followup_sent.add(sender_id)
 
                 if order_id:
                     send_message(
@@ -477,6 +488,7 @@ async def handle_webhook(request: Request):
                         "আমাদের প্রতিনিধি ফোন দিয়ে নিশ্চিত করবে। ধন্যবাদ! 😊"
                     )
             elif order_data and sender_id in order_done_users:
+                # ইতিমধ্যে অর্ডার হয়েছে — JSON না দেখিয়ে normal reply দাও
                 send_message(sender_id, "আপনার অর্ডার আগেই রিসিভ করা হয়েছে। আমাদের প্রতিনিধি শীঘ্রই যোগাযোগ করবে। 😊")
 
             elif needs_handover(reply):
@@ -489,6 +501,7 @@ async def handle_webhook(request: Request):
                 request_human_handover(sender_id)
                 human_handover_users[sender_id] = time.time()
             else:
+                # JSON reply কাস্টমারকে না দেখাই
                 if reply.strip().startswith("{") and "order_complete" in reply:
                     send_message(sender_id, "আপনার অর্ডার রিসিভ করা হয়েছে। আমাদের প্রতিনিধি শীঘ্রই যোগাযোগ করবে। 😊")
                 else:
@@ -503,7 +516,6 @@ async def handle_webhook(request: Request):
 
 @app.post("/resume/{sender_id}")
 async def resume_ai(sender_id: str):
-    sender_id = str(sender_id)
     human_handover_users.pop(sender_id, None)
     admin_last_reply.pop(sender_id, None)
     conversation_history.pop(sender_id, None)
@@ -512,13 +524,20 @@ async def resume_ai(sender_id: str):
 
 @app.get("/pause/{sender_id}/{minutes}")
 async def pause_bot(sender_id: str, minutes: int = 10):
-    sender_id = str(sender_id)
     seconds = minutes * 60
     admin_last_reply[sender_id] = time.time() + seconds - ADMIN_PAUSE_TIMEOUT
     return {"status": "paused", "sender_id": sender_id, "minutes": minutes}
 
 @app.get("/pause/{sender_id}")
 async def pause_bot_default(sender_id: str):
-    sender_id = str(sender_id)
     admin_last_reply[sender_id] = time.time()
     return {"status": "paused", "sender_id": sender_id, "minutes": 10}
+
+@app.get("/")
+async def root():
+    return {"status": "running", "bot": "Kuri Food Customer Care"}
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
