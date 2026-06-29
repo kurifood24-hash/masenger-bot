@@ -14,17 +14,19 @@ load_dotenv()
 app = FastAPI()
 
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
-VERIFY_TOKEN      = os.getenv("VERIFY_TOKEN")
-APP_SECRET        = os.getenv("APP_SECRET")
-GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
-KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
-KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
-FB_PAGE_ID        = str(os.getenv("FB_PAGE_ID", "61580033922376"))  # স্ট্রিং হিসেবে নিশ্চিত করা হলো
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+APP_SECRET = os.getenv("APP_SECRET")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+KURIFOOD_API_URL = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
+KURIFOOD_API_KEY = os.getenv("KURIFOOD_API_KEY")
+
+# পেজ আইডিটিকে স্পষ্টভাবে স্ট্রিং ও ক্লিন করে নেওয়া হলো যেন টাইপ মিসম্যাচ না হয়
+FB_PAGE_ID = str(os.getenv("FB_PAGE_ID", "61580033922376")).strip()
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 SYSTEM_PROMPT = """
-তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি online ফুড ব্র্যান্ডের AI সহকারী।
+তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি অনলাইন ফুড ব্র্যান্ডের AI সহকারী।
 তুমি সবসময় বাংলায় কথা বলো। ইংরেজিতে প্রশ্ন করলেও বাংলায় উত্তর দাও।
 কাস্টমারকে সবসময় "স্যার" বলে সম্বোধন করো।
 
@@ -43,7 +45,7 @@ SYSTEM_PROMPT = """
 - কাস্টমার যদি প্রথম মেসেজেই নাম+ঠিকানা+মোবাইল দেয় তাহলে সালাম না দিয়ে বলো: "স্যার, আপনার তথ্য পেয়েছি। আপনি কি আমাদের স্পেশাল মাংসের আচার কম্বো (৯৯০ টাকা) নিতে চাচ্ছেন?"
 - কাস্টমারের নাম দেখে যদি হিন্দু মনে হয় তাহলে বলো: "কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
 - অন্য সবার ক্ষেত্রে বলো: "আসসালামু আলাইকুম! কুড়ি ফুড কাস্টমার কেয়ার থেকে বলছি। আপনাকে কীভাবে সাহায্য করতে পারি?"
-- পরবর্তী মেসেজে আর নিজের নাম বলবে না。
+- পরবর্তী মেসেজে আর নিজের নাম বলবে না।
 
 ## পণ্য নিয়ে নিয়ম:
 - কেউ "আচার" বা "দাম" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজ বলো প্রথমে
@@ -80,7 +82,7 @@ SYSTEM_PROMPT = """
 - ইলিশের আচার — ২৫০ গ্রাম/৬৫০ টাকা | ৫০০ গ্রাম/১১৫০ টাকা
 - টক ঝাল মিষ্টি তেঁতুলের আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
 - টক ঝাল মিষ্টি বড়ই আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
-- চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩৫০ টাকা
+- চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩さい টাকা
 
 ### অন্যান্য পণ্য:
 - মিক্সড শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
@@ -90,7 +92,7 @@ SYSTEM_PROMPT = """
 - দাম: ৬৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 **বালাচাও ট্রাইও ফ্যামিলি কম্বো (ডেলিভারি ফ্রি):**
-- বিফ বালাচাও ۲۰۰গ্রাম + চিকেন বালাচাও ۲۰۰গ্রাম + চিংড়ি বালাচাও ۲۰۰গ্রাম = মোট ৬০০গ্রাম
+- বিফ বালাচাও ২০০গ্রাম + চিকেন বালাচাও ২০০গ্রাম + চিংড়ি বালাচাও ২০০গ্রাম = মোট ৬০০গ্রাম
 - দাম: ১২৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 উভয় প্যাকেজে:
@@ -102,13 +104,13 @@ SYSTEM_PROMPT = """
 **আলাদা বালাচাও (ডেলিভারি ৭০ টাকা):**
 - চিংড়ি বালাচাও: ১০০গ্রাম = ২২০ টাকা | ২০০গ্রাম = ৪০০ টাকা
 - চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ২০০গ্রাম = ৫৫০ টাকা
-- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ۲۰۰গ্রাম = ৯৫০ টাকা
+- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ২০০গ্রাম = ৯৫০ টাকা
 
 ⚠️ বালাচাও দাম নিয়ে নিয়ম:
 - কেউ শুধু "বালাচাও দাম কত" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজের দাম বলো
 - কেউ specifically "চিংড়ি বালাচাও দাম" বা "চিকেন বালাচাও দাম" জিজ্ঞেস করলে তখন আলাদা দাম বলো
 - সব বালাচাওর দাম একসাথে list করবে না
-- গুড়ের গজা (গুড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
+- গুড়ের গজা (गुড়ের খোরমা) — ১ কেজি/৩০০ টাকা | ২ কেজি/৫৫০ টাকা | ৩ কেজি/৮০০ টাকা
 
 ### হাড়িভাঙ্গা আম (প্রি-অর্ডার চলছে):
 - ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি রংপুরের বাগান থেকে
@@ -198,7 +200,7 @@ SYSTEM_PROMPT = """
 উত্তর: ২৩ জুন ২০২৬।
 
 প্রশ্ন: কীভাবে আবেদন করব?
-উত্তর: CV পাঠান — WhatsApp: 01329909002 অথবা Email: kurifood24@gmail.com
+উত্তর: CV পাঠান — WhatsApp: 01329909002 अथवा Email: kurifood24@gmail.com
 
 ## সাধারণ FAQ:
 
@@ -263,7 +265,7 @@ human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
 order_done_users: set[str] = set()  
 
-ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট পজ লক
+ADMIN_PAUSE_TIMEOUT = 300 # ৫ মিনিট পজ লক
 
 def send_order_to_website(name, phone, address, product, price=0):
     try:
@@ -379,8 +381,8 @@ async def handle_webhook(request: Request):
 
     for entry in data.get("entry", []):
         for event in entry.get("messaging", []):
-            sender_id = str(event.get("sender", {}).get("id") or "")
-            recipient_id = str(event.get("recipient", {}).get("id") or "")
+            sender_id = str(event.get("sender", {}).get("id") or "").strip()
+            recipient_id = str(event.get("recipient", {}).get("id") or "").strip()
 
             if not sender_id:
                 continue
@@ -388,19 +390,13 @@ async def handle_webhook(request: Request):
             msg = event.get("message", {})
             is_echo = msg.get("is_echo", False)
 
-            # ── [অটোমেটিক স্টপ ফিক্স] এডমিন নিজে কথা বললেই (Echo বা Direct ID ম্যাচিং) ৫ মিনিট পজ হবে ──
-            if is_echo:
-                customer_id = recipient_id
+            # ── [১০০% নিশ্চিত অটো-স্টপ ফিক্স] এডমিন কথা বললেই বট ৫ মিনিট লক হবে ──
+            if is_echo or sender_id == FB_PAGE_ID or sender_id == recipient_id:
+                # এডমিন মেসেজ দিলে কাস্টমার আইডি হবে recipient_id, অন্যথায় sender_id
+                customer_id = recipient_id if (is_echo or sender_id == FB_PAGE_ID) else sender_id
                 if customer_id and customer_id != FB_PAGE_ID:
                     admin_last_reply[customer_id] = time.time()
-                    print(f"[AUTO-PAUSE] Admin message sent to {customer_id}. Bot paused.")
-                continue
-
-            if sender_id == FB_PAGE_ID or sender_id == recipient_id:
-                customer_id = recipient_id if sender_id == FB_PAGE_ID else sender_id
-                if customer_id and customer_id != FB_PAGE_ID:
-                    admin_last_reply[customer_id] = time.time()
-                    print(f"[AUTO-PAUSE] Admin active on {customer_id}. Bot paused.")
+                    print(f"[AUTO-PAUSE] Admin active on customer: {customer_id}. Bot paused for 5 mins.")
                 continue
 
             mid = msg.get("mid", "")
@@ -428,7 +424,7 @@ async def handle_webhook(request: Request):
 
             print(f"Message from {sender_id}: {text}")
 
-            # ── Admin pause check (এডমিন কথা বলে থাকলে বট এখানে এসে স্কিপ করবে) ──
+            # ── Admin pause check (এডমিন একটি মেসেজ দিলেই এই কন্ডিশনটি ট্রু হবে এবং এআই রেসপন্স করবে না) ──
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
@@ -458,11 +454,11 @@ async def handle_webhook(request: Request):
 
             order_data = is_order_complete(reply)
             if order_data and sender_id not in order_done_users:
-                name    = order_data.get("name", "")
-                phone   = order_data.get("phone", "")
+                name = order_data.get("name", "")
+                phone = order_data.get("phone", "")
                 address = order_data.get("address", "")
                 product = order_data.get("product", "")
-                price   = order_data.get("price", 0)
+                price = order_data.get("price", 0)
 
                 order_id = send_order_to_website(name, phone, address, product, price)
                 order_done_users.add(sender_id)
@@ -524,3 +520,5 @@ async def pause_bot(sender_id: str, minutes: int = 10):
 @app.get("/pause/{sender_id}")
 async def pause_bot_default(sender_id: str):
     sender_id = str(sender_id)
+    admin_last_reply[sender_id] = time.time()
+    return {"status": "paused", "sender_id": sender_id, "minutes": 10}
