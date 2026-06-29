@@ -516,6 +516,17 @@ async def resume_ai(sender_id: str):
     order_done_users.discard(sender_id)
     return {"status": "resumed", "sender_id": sender_id}
 
+@app.get("/pause/{sender_id}/{minutes}")
+async def pause_bot(sender_id: str, minutes: int = 10):
+    seconds = minutes * 60
+    admin_last_reply[sender_id] = time.time() + seconds - ADMIN_PAUSE_TIMEOUT
+    return {"status": "paused", "sender_id": sender_id, "minutes": minutes}
+
+@app.get("/pause/{sender_id}")
+async def pause_bot_default(sender_id: str):
+    admin_last_reply[sender_id] = time.time()
+    return {"status": "paused", "sender_id": sender_id, "minutes": 10}
+
 @app.get("/")
 async def root():
     return {"status": "running", "bot": "Kuri Food Customer Care"}
