@@ -19,9 +19,7 @@ APP_SECRET        = os.getenv("APP_SECRET")
 GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
 KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
 KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
-
-# ফিক্স: পেজ আইডিকে শুরুতেই স্ট্রিং (String) হিসেবে নিশ্চিত করা হচ্ছে
-FB_PAGE_ID        = str(os.getenv("FB_PAGE_ID", "61580033922376"))  
+FB_PAGE_ID        = str(os.getenv("FB_PAGE_ID", "61580033922376"))  # Page ID নিশ্চিত করা হলো
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -80,7 +78,7 @@ SYSTEM_PROMPT = """
 - রসুনের আচার — ৫০০ গ্রাম — ৪০০ টাকা
 - আমের আচার — ৫০০ গ্রাম — ৩০০ টাকা
 - ইলিশের আচার — ২৫০ গ্রাম/৬৫০ টাকা | ৫০০ গ্রাম/১১৫০ টাকা
-- ٹক ঝাল মিষ্টি তেঁতুলের আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
+- টক ঝাল মিষ্টি তেঁতুলের আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
 - টক ঝাল মিষ্টি বড়ই আচার — ২৫০ গ্রাম/২৫০ টাকা | ৫০০ গ্রাম/৪০০ টাকা
 - চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩৫০ টাকা
 
@@ -89,7 +87,7 @@ SYSTEM_PROMPT = """
 
 **বালাচাও ট্রাইও মিনি কম্বো (ডেলিভারি ফ্রি):**
 - বিফ বালাচাও ১০০গ্রাম + চিকেন বালাচাও ১০০গ্রাম + চিংড়ি বালাচাও ১০০গ্রাম = মোট ৩০০গ্রাম
-- দাম: ৬芋 টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
+- দাম: ৬৯০ টাকা | ডেলিভারি: সম্পূর্ণ ফ্রি
 
 **বালাচাও ট্রাইও ফ্যামিলি কম্বো (ডেলিভারি ফ্রি):**
 - বিফ বালাচাও ২০০গ্রাম + চিকেন বালাচাও ২০০গ্রাম + চিংড়ি বালাচাও ২০০গ্রাম = মোট ৬০০গ্রাম
@@ -103,8 +101,8 @@ SYSTEM_PROMPT = """
 
 **আলাদা বালাচাও (ডেলিভারি ৭০ টাকা):**
 - চিংড়ি বালাচাও: ১০০গ্রাম = ২২০ টাকা | ২০০গ্রাম = ৪০০ টাকা
-- চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ۲۰۰গ্রাম = ৫৫০ টাকা
-- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ۲۰۰গ্রাম = ৯৫০ টাকা
+- চিকেন বালাচাও: ১০০গ্রাম = ৩০০ টাকা | ২০০গ্রাম = ৫৫০ টাকা
+- বিফ বালাচাও: ১০০গ্রাম = ৫০০ টাকা | ২০০গ্রাম = ৯৫০ টাকা
 
 ⚠️ বালাচাও দাম নিয়ে নিয়ম:
 - কেউ শুধু "বালাচাও দাম কত" জিজ্ঞেস করলে শুধু কম্বো প্যাকেজের দাম বলো
@@ -116,7 +114,7 @@ SYSTEM_PROMPT = """
 - ১০০% ফরমালিন ও কেমিক্যালমুক্ত, সরাসরি রংপুরের বাগান থেকে
 - আঁশহীন, ছোট আঁটি, রসে ভরপুর — গড়ে ৩-৪টি আমে ১ কেজি
 - ১০ কেজি — ১,২০০ টাকা (ডেলিভারি ফ্রি)
-- ২০ কেজি — ২,২০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
+- ২০ কেজি — ২,২০০০ টাকা (ডেলিভারি ফ্রি) — কেজি প্রতি মাত্র ১১০ টাকা
 - সম্ভাব্য ডেলিভারি: ২১-২৩ জুন
 - ঢাকা, চট্টগ্রাম, কুমিল্লা, সিলেট, রংপুর — ক্যাশ অন ডেলিভারি
 - অন্য জেলায় — ৫০% অগ্রিম পেমেন্ট
@@ -191,7 +189,7 @@ SYSTEM_PROMPT = """
 উত্তর: হ্যাঁ, বছরে একবার উৎসব বোনাস এবং কর্মদক্ষতার ভিত্তিতে ইনক্রিমেন্ট।
 
 প্রশ্ন: চাকরি কি পার্মানেন্ট?
-উত্তর: প্রথম ৬ মাস কন্ट्रাক্ট বেসিস, এরপর পার্মানেন্ট করা হবে।
+উত্তর: প্রথম ৬ মাস কন্ট্রাক্ট বেসিস, এরপর পার্মানেন্ট করা হবে।
 
 প্রশ্ন: ইন্টারভিউ কীভাবে হবে?
 উত্তর: সরাসরি অফিসে আসতে হবে। তারিখ পরে জানানো হবে।
@@ -217,7 +215,7 @@ SYSTEM_PROMPT = """
 উত্তর: ১২৫০ টাকার পণ্য ৯৯০ টাকায় দিচ্ছি — এটাই সর্বোচ্চ ছাড়।
 
 প্রশ্ন: মিক্সড শুটকিতে কী আছে?
-উত্তর: কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
+উত্তর: কাঁচকি, মলা ও ছোট টেংরা, پانچমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
 
 প্রশ্ন: সরিষার তেল পাওয়া যায়?
 উত্তর: এখনো বাজারে আসেনি, শীঘ্রই আসবে।
@@ -381,7 +379,6 @@ async def handle_webhook(request: Request):
 
     for entry in data.get("entry", []):
         for event in entry.get("messaging", []):
-            # আইডিগুলোকে কঠোরভাবে String এ কনভার্ট করা হলো জটলা এড়াতে
             sender_id = str(event.get("sender", {}).get("id") or "")
             recipient_id = str(event.get("recipient", {}).get("id") or "")
 
@@ -389,21 +386,14 @@ async def handle_webhook(request: Request):
                 continue
 
             msg = event.get("message", {})
+            is_echo = msg.get("is_echo", False)
 
-            # ── ফিক্স ১: Echo ব্লকের অতিরিক্ত অটো-মেসেজ ডিলিট করা হয়েছে ──
-            if msg.get("is_echo"):
+            # ── [বুলেটপ্রুফ ফিক্স] এডমিন মেটা অ্যাপ বা অন্য কোথাও থেকে রেসপন্স করলেই বট ৫ মিনিট পজ হবে ──
+            if is_echo or sender_id == FB_PAGE_ID:
                 customer_id = recipient_id
                 if customer_id and customer_id != FB_PAGE_ID:
                     admin_last_reply[customer_id] = time.time()
-                    print(f"Admin replied (Echo) to {customer_id} — bot paused for 5 min")
-                continue
-
-            # ── ফিক্স ২: স্ট্রিং টাইপ ম্যাচিং করে পারফেক্টলি এডমিন ডিটেকশন ──
-            if sender_id == FB_PAGE_ID or sender_id == recipient_id:
-                customer_id = recipient_id
-                if customer_id and customer_id != FB_PAGE_ID:
-                    admin_last_reply[customer_id] = time.time()
-                    print(f"Admin active on {customer_id} — bot paused for 5 min")
+                    print(f"Admin intercepted. Bot completely paused for customer: {customer_id}")
                 continue
 
             mid = msg.get("mid", "")
@@ -435,11 +425,10 @@ async def handle_webhook(request: Request):
             if sender_id in admin_last_reply:
                 elapsed = time.time() - admin_last_reply[sender_id]
                 if elapsed < ADMIN_PAUSE_TIMEOUT:
-                    print(f"Admin active — bot paused for {sender_id} ({int(elapsed)}s)")
+                    print(f"Admin active — skipping AI reply for {sender_id} ({int(elapsed)}s)")
                     continue
                 else:
                     del admin_last_reply[sender_id]
-                    print(f"Admin pause ended — bot active for {sender_id}")
 
             # ── Handover check ──
             if sender_id in human_handover_users:
