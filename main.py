@@ -405,6 +405,9 @@ async def handle_webhook(request: Request):
 
             msg = event.get("message", {})
 
+            if msg.get("is_echo"):
+                print(f"RAW ECHO EVENT: {json.dumps(event)}")
+
             # ── Echo event ──
             # বটের নিজের পাঠানো message = bot_sent_message_ids-এ থাকবে → ignore
             # এডমিন ইনবক্স থেকে টাইপ করলে = list-এ থাকবে না → bot pause
@@ -552,6 +555,29 @@ async def pause_bot(sender_id: str, minutes: int = 10):
 async def pause_bot_default(sender_id: str):
     admin_last_reply[sender_id] = time.time()
     return {"status": "paused", "sender_id": sender_id, "minutes": 10}
+
+@app.get("/resubscribe")
+async def resubscribe():
+    """
+    Page-কে জোর করে messages, messaging_postbacks, message_echoes
+    fields-এ subscribe করায়। App Dashboard-এ টিক দিলেও অনেক সময়
+    Page-level subscription আপডেট হয় না — এই endpoint সেটা ঠিক করে।
+    """
+    url = "https://graph.facebook.com/v19.0/me/subscribed_apps"
+    params = {
+        "subscribed_fields": "messages,messaging_postbacks,message_echoes",
+        "access_token": PAGE_ACCESS_TOKEN
+    }
+    resp = requests.post(url, params=params)
+    return {"status_code": resp.status_code, "response": resp.json()}
+
+@app.get("/check_subscription")
+async def check_subscription():
+    """বর্তমানে Page কোন কোন field-এ subscribe আছে তা দেখায়।"""
+    url = "https://graph.facebook.com/v19.0/me/subscribed_apps"
+    params = {"access_token": PAGE_ACCESS_TOKEN}
+    resp = requests.get(url, params=params)
+    return resp.json()
 
 @app.get("/")
 async def root():
