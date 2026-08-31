@@ -278,12 +278,24 @@ def send_order_to_website(name, phone, address, product, price=0):
             "price": price,
             "note": "Facebook Messenger অর্ডার",
         }
-        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=10)
-        data = r.json()
-        if data.get("ok"):
-            return data.get("order_id")
-        else:
-            print(f"Order API error: {data.get('error')}")
+        # JSON দিয়ে চেষ্টা করো
+        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=15)
+        print(f"Order API response [{r.status_code}]: {r.text[:200]}")
+        try:
+            data = r.json()
+            if data.get("ok"):
+                return data.get("order_id")
+            else:
+                # JSON কাজ না করলে form data দিয়ে চেষ্টা করো
+                r2 = requests.post(KURIFOOD_API_URL, data=payload, timeout=15)
+                print(f"Order API form response [{r2.status_code}]: {r2.text[:200]}")
+                data2 = r2.json()
+                if data2.get("ok"):
+                    return data2.get("order_id")
+                print(f"Order API error: {data2.get('error')}")
+                return None
+        except Exception:
+            print(f"Order API raw response: {r.text[:200]}")
             return None
     except Exception as e:
         print(f"Order API error: {e}")
@@ -540,26 +552,30 @@ async def pause_bot_default(sender_id: str):
 @app.get("/test-order")
 async def test_order():
     """kurifood.com API test — সরাসরি response দেখায়"""
+    results = {}
+    payload = {
+        "api_key": KURIFOOD_API_KEY,
+        "name": "Test Name",
+        "phone": "01700000000",
+        "address": "Test Address, Dhaka",
+        "product": "গরুর আচার ৩০০গ্রাম",
+        "quantity": 1,
+        "price": 350,
+        "note": "Test Order from Bot",
+    }
     try:
-        payload = {
-            "api_key": KURIFOOD_API_KEY,
-            "name": "Test Name",
-            "phone": "01700000000",
-            "address": "Test Address, Dhaka",
-            "product": "গরুর আচার ৩০০গ্রাম",
-            "quantity": 1,
-            "price": 350,
-            "note": "Test Order from Bot",
-        }
-        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=10)
-        return {
-            "status_code": r.status_code,
-            "response": r.text,
-            "api_url": KURIFOOD_API_URL,
-            "api_key_set": bool(KURIFOOD_API_KEY),
-        }
+        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=15)
+        results["json_method"] = {"status": r.status_code, "response": r.text[:300]}
     except Exception as e:
-        return {"error": str(e)}
+        results["json_method"] = {"error": str(e)}
+    try:
+        r2 = requests.post(KURIFOOD_API_URL, data=payload, timeout=15)
+        results["form_method"] = {"status": r2.status_code, "response": r2.text[:300]}
+    except Exception as e:
+        results["form_method"] = {"error": str(e)}
+    results["api_url"] = KURIFOOD_API_URL
+    results["api_key_set"] = bool(KURIFOOD_API_KEY)
+    return results
 
 @app.get("/")
 async def root():
