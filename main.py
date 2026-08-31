@@ -20,6 +20,7 @@ GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY")
 KURIFOOD_API_URL  = os.getenv("KURIFOOD_API_URL", "https://kurifood.com/api_order.php")
 KURIFOOD_API_KEY  = os.getenv("KURIFOOD_API_KEY")
 FB_PAGE_ID        = os.getenv("FB_PAGE_ID", "61580033922376")  # Kuri Food Page ID
+ADMIN_FB_IDS      = set(x.strip() for x in os.getenv("ADMIN_FB_IDS", "").split(",") if x.strip())
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -38,6 +39,22 @@ SYSTEM_PROMPT = """
 - Greeting "আসসালামু আলাইকুম" শুধু প্রথমবার দেবে — পরে আর দেবে না
 - কখনো "ঘরোয়া মাংস" বলবে না — বলবে "ঘরোয়া পরিবেশে তৈরি মাংসের আচার"
 - কখনো "সম্পূর্ণ প্রাকৃতিক" বলবে না — বলবে "কোনো কেমিক্যাল বা প্রিজারভেটিভ নেই"
+
+## পুনরাবৃত্তি প্রশ্ন এড়ানোর কঠোর নিয়ম — অত্যন্ত গুরুত্বপূর্ণ:
+প্রতিটি উত্তর লেখার আগে অবশ্যই উপরে দেওয়া পুরো কথোপকথনের history মন দিয়ে পড়ো।
+
+- History-তে যদি কোনো প্রশ্নের উত্তর কাস্টমার ইতিমধ্যে দিয়ে থাকে (নাম, ফোন, ঠিকানা, কোন পণ্য, কোন স্বাদ ইত্যাদি) — সেই প্রশ্ন আর কখনোই দ্বিতীয়বার করবে না।
+- তুমি (বট) নিজে আগে যে প্রশ্ন একবার জিজ্ঞেস করেছ, সেই একই বা প্রায় একই অর্থের প্রশ্ন আর দ্বিতীয়বার করবে না।
+- "আর কিছু জানতে চান?", "কীভাবে সাহায্য করতে পারি?" — এই ধরনের generic প্রশ্ন একই কথোপকথনে একবারের বেশি ব্যবহার করবে না।
+- প্রতি উত্তর দেওয়ার আগে নিজেকে জিজ্ঞেস করো: "এই কথাটা/প্রশ্নটা কি আমি বা কাস্টমার ইতিমধ্যে বলেছি?" উত্তর হ্যাঁ হলে — সেটা আর বলবে না।
+
+❌ ভুল (করা যাবে না):
+Bot: আপনাকে কীভাবে সাহায্য করতে পারি?
+Customer: আচার নিতে চাই → Bot: কোন আচার? → Customer: গরু → Bot: আর কিছু জানতে চান?
+Customer: না → Bot: আচ্ছা, আপনাকে কীভাবে সাহায্য করতে পারি? ← ভুল! আগেই করা হয়েছে
+
+✅ সঠিক:
+Customer: না → Bot: ঠিক আছে স্যার, অর্ডারের জন্য আপনার নাম, ঠিকানা ও মোবাইল নম্বরটি দিন।
 
 ## প্রথম মেসেজের নিয়ম:
 - কাস্টমার যদি প্রথম মেসেজেই নাম+ঠিকানা+মোবাইল দেয় তাহলে সালাম না দিয়ে বলো: "স্যার, আপনার তথ্য পেয়েছি। আপনি কি আমাদের স্পেশাল মাংসের আচার কম্বো (৯৯০ টাকা) নিতে চাচ্ছেন?"
@@ -59,7 +76,11 @@ SYSTEM_PROMPT = """
 - নিয়মিত দাম: ১২৫০ টাকা | অফার দাম: ৯৯০ টাকা
 - প্রতি জারে ১২-১৪ পিস মাংস
 - রসুন: প্রতি জারে ১-২টি
-- ডেলিভারি: বিনামূল্যে
+- ডেলিভারি: ৭০ টাকা (সারা বাংলাদেশ)
+
+⚠️ মাংসের আচার কম্বো ডেলিভারি — কখনো ভুল করবে না:
+মাংসের আচার কম্বোতে সবসময় ৭০ টাকা ডেলিভারি চার্জ। এটা কখনো ফ্রি না।
+কেউ জিজ্ঞেস করলে সরাসরি বলো: "স্যার, মাংসের আচার কম্বোতে ডেলিভারি চার্জ ৭০ টাকা, সারা বাংলাদেশ।"
 
 **আমের আচার কম্বো প্যাকেজ:**
 - আমের আচার — ৫০০ গ্রাম
@@ -67,7 +88,7 @@ SYSTEM_PROMPT = """
 - আম-রসুন-তেঁতুল মিক্সড আচার — ৫০০ গ্রাম
 - মোট: ১.৫ কেজি (৩টি জারে)
 - দাম: ৯৯০ টাকা
-- ডেলিভারি: বিনামূল্যে
+- ডেলিভারি: ৭০ টাকা (সারা বাংলাদেশ)
 
 ### আলাদা মাংসের আচার:
 - শুধু গরুর মাংসের আচার — ৩০০ মিলি — ৫৫০ টাকা
@@ -83,7 +104,16 @@ SYSTEM_PROMPT = """
 - চালতার আচার — ২৫০ গ্রাম/২০০ টাকা | ৫০০ গ্রাম/৩৫০ টাকা
 
 ### অন্যান্য পণ্য:
-- মিক্সড শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
+- ইলিশ শুটকি ভর্তা — ৩০০ গ্রাম — ৪০০ টাকা
+
+**শুটকি ভর্তা কম্বো:**
+- ইলিশ শুটকি ভর্তা — ২৫০ গ্রাম
+- চিংড়ি বালাচাও — ১০০ গ্রাম
+- মিক্স শুটকি ভর্তা — ২৫০ গ্রাম
+- মোট: ৬০০ গ্রাম (৩টি আইটেম)
+- দাম: ৯৯০ টাকা
+- মেয়াদ: ৩-৪ মাস
+- ডেলিভারি: ৭০ টাকা (সারা বাংলাদেশ)
 
 **বালাচাও ট্রাইও মিনি কম্বো (ডেলিভারি ফ্রি):**
 - বিফ বালাচাও ১০০গ্রাম + চিকেন বালাচাও ১০০গ্রাম + চিংড়ি বালাচাও ১০০গ্রাম = মোট ৩০০গ্রাম
@@ -141,7 +171,8 @@ SYSTEM_PROMPT = """
 - আমের আচার কম্বো — ডেলিভারি ৭০ টাকা
 - আলাদা মাংসের আচার (গরু/হাঁস/মুরগি) — ডেলিভারি ৭০ টাকা
 - রসুনের আচার, আমের আচার, ইলিশের আচার ইত্যাদি — ডেলিভারি ৭০ টাকা
-- মিক্সড শুটকি ভর্তা — ডেলিভারি ৭০ টাকা
+- ইলিশ শুটকি ভর্তা — ডেলিভারি ৭০ টাকা
+- শুটকি ভর্তা কম্বো — ডেলিভারি ৭০ টাকা
 - গুড়ের গজা — ডেলিভারি ৭০ টাকা
 - আলাদা বালাচাও (কম্বো ছাড়া) — ডেলিভারি ৭০ টাকা
 
@@ -214,8 +245,8 @@ SYSTEM_PROMPT = """
 প্রশ্ন: দাম কমানো যাবে?
 উত্তর: ১২৫০ টাকার পণ্য ৯৯০ টাকায় দিচ্ছি — এটাই সর্বোচ্চ ছাড়।
 
-প্রশ্ন: মিক্সড শুটকিতে কী আছে?
-উত্তর: কাঁচকি, মলা ও ছোট টেংরা, পাঁচমিশালি নদীর শুঁটকি — খাঁটি সরিষার তেলে।
+প্রশ্ন: ইলিশ শুটকি ভর্তায় কী আছে?
+উত্তর: ইলিশ শুঁটকি — খাঁটি সরিষার তেলে তৈরি।
 
 প্রশ্ন: সরিষার তেল পাওয়া যায়?
 উত্তর: এখনো বাজারে আসেনি, শীঘ্রই আসবে।
@@ -245,6 +276,11 @@ SYSTEM_PROMPT = """
 কাস্টমার যদি জিজ্ঞেস করে "আপনি কি AI?", "আপনি তো AI", "আপনি রোবট?" ইত্যাদি — তাহলে বলো:
 "জি স্যার, আমি কুড়ি ফুডের AI সহকারী। আপনাকে দ্রুত ও সঠিক তথ্য দিতে সবসময় প্রস্তুত। 😊 কীভাবে সাহায্য করতে পারি?"
 
+## ডেলিভারি স্ট্যাটাস নিয়ে অত্যন্ত গুরুত্বপূর্ণ নিয়ম:
+⛔ কখনো ডেলিভারি স্ট্যাটাস, ট্র্যাকিং নম্বর, বা "কবে আসবে" এই বিষয়ে কোনো তথ্য বানিয়ে বলবে না।
+⛔ তোমার কাছে কোনো অর্ডারের বর্তমান অবস্থা জানার সুযোগ নেই।
+⛔ কাস্টমার "পণ্য পাইনি", "কবে আসবে", "কোথায় আছে", "হাতে পাইনি", "কুরিয়ার কোথায়" বললে — কোনো উত্তর দেবে না, সাথে সাথে HANDOVER করবে।
+
 ## HANDOVER নিয়ম:
 নিচের যেকোনো পরিস্থিতিতে শুধু এই JSON রিটার্ন করো:
 {"handover": true}
@@ -255,6 +291,11 @@ SYSTEM_PROMPT = """
 - কাস্টমার মানুষের সাথে কথা বলতে চাইছে
 - কাস্টমার আইনি হুমকি দিচ্ছে
 - চাকরি সম্পর্কে এমন প্রশ্ন করছে যার উত্তর উপরে নেই
+- কাস্টমার বলছে পণ্য পাইনি / হাতে পাইনি / ডেলিভারি আসেনি
+- কাস্টমার জিজ্ঞেস করছে ডেলিভারি কবে আসবে / কখন আসবে (নির্দিষ্ট অর্ডারের বিষয়ে)
+- কাস্টমার জিজ্ঞেস করছে পণ্য এখন কোথায় / কুরিয়ার কোথায়
+- কাস্টমার ট্র্যাকিং নম্বর চাইছে
+- কাস্টমার বলছে অর্ডার করেছে কিন্তু কোনো আপডেট নেই
 """
 
 conversation_history: dict[str, list] = {}
@@ -263,6 +304,7 @@ human_handover_users: dict[str, float] = {}
 processed_message_ids: set[str] = set()
 echo_followup_sent: set[str] = set()
 order_done_users: set[str] = set()  # একবার অর্ডার হলে আর অর্ডার নেবে না
+bot_sent_message_ids: set[str] = set()  # বটের নিজের পাঠানো message ID track করতে
 
 ADMIN_PAUSE_TIMEOUT = 300  # ৫ মিনিট
 
@@ -278,24 +320,12 @@ def send_order_to_website(name, phone, address, product, price=0):
             "price": price,
             "note": "Facebook Messenger অর্ডার",
         }
-        # JSON দিয়ে চেষ্টা করো
-        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=15)
-        print(f"Order API response [{r.status_code}]: {r.text[:200]}")
-        try:
-            data = r.json()
-            if data.get("ok"):
-                return data.get("order_id")
-            else:
-                # JSON কাজ না করলে form data দিয়ে চেষ্টা করো
-                r2 = requests.post(KURIFOOD_API_URL, data=payload, timeout=15)
-                print(f"Order API form response [{r2.status_code}]: {r2.text[:200]}")
-                data2 = r2.json()
-                if data2.get("ok"):
-                    return data2.get("order_id")
-                print(f"Order API error: {data2.get('error')}")
-                return None
-        except Exception:
-            print(f"Order API raw response: {r.text[:200]}")
+        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=10)
+        data = r.json()
+        if data.get("ok"):
+            return data.get("order_id")
+        else:
+            print(f"Order API error: {data.get('error')}")
             return None
     except Exception as e:
         print(f"Order API error: {e}")
@@ -342,10 +372,20 @@ def send_message(recipient_id: str, text: str):
     params = {"access_token": PAGE_ACCESS_TOKEN}
     chunks = [text[i:i+1900] for i in range(0, len(text), 1900)]
     for chunk in chunks:
-        requests.post(url, params=params, json={
+        resp = requests.post(url, params=params, json={
             "recipient": {"id": recipient_id},
             "message": {"text": chunk}
         })
+        try:
+            data = resp.json()
+            mid = data.get("message_id")
+            if mid:
+                bot_sent_message_ids.add(mid)
+                if len(bot_sent_message_ids) > 2000:
+                    bot_sent_message_ids.clear()
+                print(f"Bot sent tracked: {mid[:25]}...")
+        except Exception:
+            pass
 
 def get_ai_reply(sender_id: str, user_message: str) -> str:
     history = conversation_history.setdefault(sender_id, [])
@@ -398,27 +438,32 @@ async def handle_webhook(request: Request):
             if not sender_id:
                 continue
 
-            msg = event.get("message", {})
-
-            # ── Echo — Admin reply করেছে ──
-            if msg.get("is_echo"):
-                customer_id = recipient_id
-                if customer_id:
-                    admin_last_reply[customer_id] = time.time()
-                    print(f"Admin replied to {customer_id} — bot paused for 5 min")
-                    if customer_id not in echo_followup_sent:
-                        echo_followup_sent.add(customer_id)
-                        time.sleep(2)
-                        send_message(customer_id, "আর কোনো তথ্য দিয়ে সহযোগিতা করতে পারি স্যার?")
+            # ── এডমিনের নিজের Facebook ID হলে — বট চুপ থাকবে ──
+            if sender_id in ADMIN_FB_IDS:
+                print(f"Message from ADMIN ({sender_id}) — bot silent")
                 continue
 
-            # ── Page নিজে sender হলে (admin reply) — বট pause করো ──
-            if sender_id == FB_PAGE_ID or sender_id == recipient_id:
-                # Admin reply করেছে — pause timer set করো
-                customer_id = recipient_id
-                if customer_id and customer_id != FB_PAGE_ID:
-                    admin_last_reply[customer_id] = time.time()
-                    print(f"Admin replied to {customer_id} — bot paused for 5 min")
+            msg = event.get("message", {})
+
+            if msg.get("is_echo"):
+                print(f"RAW ECHO EVENT: {json.dumps(event)}")
+
+            # ── Echo event: বটের নিজের message ID দিয়ে আলাদা করো ──
+            if msg.get("is_echo"):
+                echo_mid = msg.get("mid", "")
+                if echo_mid and echo_mid in bot_sent_message_ids:
+                    print(f"Bot own echo — ignored ({echo_mid[:25]}...)")
+                elif echo_mid:
+                    customer_id = recipient_id
+                    if customer_id and customer_id != FB_PAGE_ID:
+                        admin_last_reply[customer_id] = time.time()
+                        print(f"*** Human admin replied to {customer_id} — bot PAUSED {ADMIN_PAUSE_TIMEOUT//60} min ***")
+                else:
+                    print("Echo with no mid — ignored")
+                continue
+
+            # ── Page নিজে sender হলে — skip ──
+            if sender_id == FB_PAGE_ID:
                 continue
 
             mid = msg.get("mid", "")
@@ -549,33 +594,22 @@ async def pause_bot_default(sender_id: str):
     admin_last_reply[sender_id] = time.time()
     return {"status": "paused", "sender_id": sender_id, "minutes": 10}
 
-@app.get("/test-order")
-async def test_order():
-    """kurifood.com API test — সরাসরি response দেখায়"""
-    results = {}
-    payload = {
-        "api_key": KURIFOOD_API_KEY,
-        "name": "Test Name",
-        "phone": "01700000000",
-        "address": "Test Address, Dhaka",
-        "product": "গরুর আচার ৩০০গ্রাম",
-        "quantity": 1,
-        "price": 350,
-        "note": "Test Order from Bot",
+@app.get("/resubscribe")
+async def resubscribe():
+    url = "https://graph.facebook.com/v19.0/me/subscribed_apps"
+    params = {
+        "subscribed_fields": "messages,messaging_postbacks,message_echoes",
+        "access_token": PAGE_ACCESS_TOKEN
     }
-    try:
-        r = requests.post(KURIFOOD_API_URL, json=payload, timeout=15)
-        results["json_method"] = {"status": r.status_code, "response": r.text[:300]}
-    except Exception as e:
-        results["json_method"] = {"error": str(e)}
-    try:
-        r2 = requests.post(KURIFOOD_API_URL, data=payload, timeout=15)
-        results["form_method"] = {"status": r2.status_code, "response": r2.text[:300]}
-    except Exception as e:
-        results["form_method"] = {"error": str(e)}
-    results["api_url"] = KURIFOOD_API_URL
-    results["api_key_set"] = bool(KURIFOOD_API_KEY)
-    return results
+    resp = requests.post(url, params=params)
+    return {"status_code": resp.status_code, "response": resp.json()}
+
+@app.get("/check_subscription")
+async def check_subscription():
+    url = "https://graph.facebook.com/v19.0/me/subscribed_apps"
+    params = {"access_token": PAGE_ACCESS_TOKEN}
+    resp = requests.get(url, params=params)
+    return resp.json()
 
 @app.get("/")
 async def root():
