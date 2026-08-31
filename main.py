@@ -396,7 +396,7 @@ def get_ai_reply(sender_id: str, user_message: str) -> str:
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
 
     response = client.models.generate_content(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash-lite",
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             max_output_tokens=300,
@@ -610,15 +610,6 @@ async def check_subscription():
     params = {"access_token": PAGE_ACCESS_TOKEN}
     resp = requests.get(url, params=params)
     return resp.json()
-
-@app.get("/my-ip")
-async def my_ip():
-    """Railway-র outbound IP জানতে"""
-    try:
-        r = requests.get("https://api.ipify.org?format=json", timeout=10)
-        return r.json()
-    except Exception as e:
-        return {"error": str(e)}
 
 @app.get("/")
 async def root():
