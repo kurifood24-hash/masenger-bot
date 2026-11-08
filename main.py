@@ -25,6 +25,7 @@ FB_PAGE_ID        = os.getenv("FB_PAGE_ID", "61580033922376")  # Kuri Food Page 
 ADMIN_FB_IDS      = set(x.strip() for x in os.getenv("ADMIN_FB_IDS", "").split(",") if x.strip())
 BOT_APP_ID        = os.getenv("BOT_APP_ID", "")  # এই বটের Facebook App ID (ঐচ্ছিক, দিলে বটের নিজের echo আরও নিশ্চিতভাবে চেনা যায়)
 AUTO_REPLY_WAIT   = float(os.getenv("AUTO_REPLY_WAIT", "6"))    # কাস্টমারের মেসেজের পর বট কত সেকেন্ড অপেক্ষা করবে
+VOICE_MODEL       = os.getenv("VOICE_MODEL", "gemini-2.5-flash")  # ভয়েস বোঝার মডেল
 AUTO_REPLY_WINDOW = float(os.getenv("AUTO_REPLY_WINDOW", "10")) # এর মধ্যে পেজ থেকে উত্তর এলে সেটা অটো রিপ্লাই ধরা হবে
 
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -411,6 +412,8 @@ bot_sent_message_ids: set[str] = set()  # বটের নিজের পাঠ
 ad_context: dict[str, str] = {}  # কোন বিজ্ঞাপন থেকে কাস্টমার এসেছে
 last_customer_msg_time: dict[str, float] = {}  # কাস্টমারের শেষ মেসেজের সময়
 auto_reply_seen: dict[str, float] = {}         # পেজের অটো রিপ্লাই কখন এসেছে
+auto_silenced_at: dict[str, float] = {}        # কখন অটো রিপ্লাইয়ের জন্য বট চুপ ছিল
+AUTO_SILENCE_COOLDOWN = 6 * 3600               # একই কাস্টমারের জন্য ৬ ঘণ্টায় একবারই চুপ থাকবে
 
 def extract_ad_title(ref: dict) -> str:
     """Click-to-Messenger বিজ্ঞাপনের referral থেকে বিজ্ঞাপনের শিরোনাম বের করা"""
@@ -581,40 +584,51 @@ def get_ai_reply(sender_id: str, user_message: str) -> str:
     conversation_history[sender_id] = history[-20:]
     return reply
 
+def transcribe_audio(audio_url: str):
+    """কাস্টমারের ভয়েস মেসেজ ডাউনলোড করে Gemini দিয়ে বাংলা লেখায় রূপান্তর। বুঝতে না পারলে None।"""
+    try:
+        r = requests.get(audio_url, timeout=30)
+        if r.status_code != 200 or not r.content:
+            print(f"Audio download failed: {r.status_code}")
+            return None
+        mime = r.headers.get("content-type", "").split(";")[0].strip().lower()
+        # মেসেঞ্জারের ভয়েস সাধারণত mp4/aac — অডিও টাইপ না পেলে audio/mp4 ধরে নিই
+        if not mime.startswith("audio/"):
+            mime = "audio/mp4"
+        tr = client.models.generate_content(
+            model=VOICE_MODEL,
+            contents=[types.Content(role="user", parts=[
+                types.Part.from_bytes(data=r.content, mime_type=mime),
+                types.Part.from_text(text=(
+                    "এটা একজন বাংলাদেশি কাস্টমারের ভয়েস মেসেজ, একটি আচার/খাবারের অনলাইন দোকানে পাঠানো। "
+                    "কাস্টমার যা বলেছে হুবহু বাংলা লেখায় লিখে দাও (আঞ্চলিক ভাষা হলেও যতটা সম্ভব ঠিকভাবে)। "
+                    "ইংরেজি শব্দ থাকলে সেভাবেই রাখো। মোবাইল নম্বর বললে সংখ্যায় লিখো। "
+                    "শুধু কথাগুলো লিখবে, ব্যাখ্যা বা অন্য কিছু না। "
+                    "কোনো কথা না থাকলে বা একদম বোঝা না গেলে শুধু লিখবে: UNCLEAR"
+                )),
+            ])],
+        )
+        text = (tr.text or "").strip()
+        if not text or text.upper().startswith("UNCLEAR"):
+            return None
+        print(f"Voice transcribed: {text}")
+        return text
+    except Exception as e:
+        print(f"Audio transcription error: {e}")
+        return None
+
 def handle_customer_message(sender_id: str, msg: dict):
     """কাস্টমারের একটি মেসেজ প্রসেস করা (ভয়েস → টেক্সট → AI → উত্তর)"""
-    # ── Voice message — Gemini দিয়ে transcription ──
+    # ── Voice message — Gemini দিয়ে বুঝে লেখায় রূপান্তর ──
     attachments = msg.get("attachments", [])
-    has_audio = any(a.get("type") == "audio" for a in attachments)
+    audio_att = next((a for a in attachments if a.get("type") == "audio"), None)
 
-    if has_audio:
-        audio_att = next((a for a in attachments if a.get("type") == "audio"), None)
-        audio_url = audio_att.get("payload", {}).get("url") if audio_att else None
-        transcribed_text = None
-
-        if audio_url:
-            try:
-                audio_resp = requests.get(audio_url, timeout=20)
-                if audio_resp.status_code == 200:
-                    audio_bytes = audio_resp.content
-                    mime_type = audio_resp.headers.get("content-type", "audio/mpeg").split(";")[0].strip()
-                    tr = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=[types.Content(role="user", parts=[
-                            types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
-                            types.Part.from_text(
-                                "এই অডিওতে কী বলা হয়েছে বাংলায় লিখে দাও। "
-                                "শুধু transcription দাও, অন্য কিছু না।"
-                            )
-                        ])]
-                    )
-                    transcribed_text = tr.text.strip()
-                    print(f"Voice transcribed for {sender_id}: {transcribed_text}")
-            except Exception as e:
-                print(f"Audio transcription error: {e}")
+    if audio_att:
+        audio_url = (audio_att.get("payload") or {}).get("url")
+        transcribed_text = transcribe_audio(audio_url) if audio_url else None
 
         if not transcribed_text:
-            send_message(sender_id, "স্যার, ভয়েস মেসেজটা বুঝতে সমস্যা হচ্ছে। একটু টেক্সটে লিখুন।")
+            send_message(sender_id, "স্যার, ভয়েস মেসেজটা পরিষ্কার বুঝতে পারিনি। আরেকবার বলবেন, অথবা একটু লিখে জানাবেন?")
             return
 
         text = transcribed_text
@@ -717,7 +731,9 @@ def delayed_handle(sender_id: str, msg: dict, t0: float):
     """কিছুক্ষণ অপেক্ষা করি — এর মধ্যে পেজের অটো রিপ্লাই এলে বট চুপ থাকবে"""
     time.sleep(AUTO_REPLY_WAIT)
     seen = auto_reply_seen.get(sender_id, 0)
-    if seen >= t0:
+    recently_silenced = time.time() - auto_silenced_at.get(sender_id, 0) < AUTO_SILENCE_COOLDOWN
+    if seen >= t0 and not recently_silenced:
+        auto_silenced_at[sender_id] = time.time()
         print(f"Page auto-reply already answered {sender_id} — bot silent for this message")
         text = msg.get("text", "").strip()
         if text:  # কথোপকথনের ইতিহাসে রাখি, যাতে পরের উত্তরে context থাকে
