@@ -28,7 +28,10 @@ AUTO_REPLY_WAIT   = float(os.getenv("AUTO_REPLY_WAIT", "6"))    # কাস্�
 VOICE_MODEL       = os.getenv("VOICE_MODEL", "gemini-2.5-flash")  # ভয়েস বোঝার মডেল
 AUTO_REPLY_WINDOW = float(os.getenv("AUTO_REPLY_WINDOW", "10")) # এর মধ্যে পেজ থেকে উত্তর এলে সেটা অটো রিপ্লাই ধরা হবে
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = genai.Client(
+    api_key=GEMINI_API_KEY,
+    http_options=types.HttpOptions(api_version="v1beta"),
+)
 
 SYSTEM_PROMPT = """
 তুমি "কুড়ি ফুড কাস্টমার কেয়ার" — একটি বাংলাদেশি অনলাইন ফুড ব্র্যান্ডের AI সহকারী।
